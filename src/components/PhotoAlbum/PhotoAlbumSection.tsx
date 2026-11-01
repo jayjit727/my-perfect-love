@@ -330,7 +330,10 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             ) : (
               <button
                 className="romantic-btn"
-                onClick={onContinue}
+                onClick={() => {
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  onContinue();
+                }}
                 style={{ background: 'linear-gradient(135deg, #a8384a, #d44d63)' }}
               >
                 See My Birthday Message for You ❤️
@@ -351,7 +354,10 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             {!isLastPhoto && (
               <button
                 className="secondary-btn"
-                onClick={onContinue}
+                onClick={() => {
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  onContinue();
+                }}
                 style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', opacity: 0.85 }}
                 title="Continue to Birthday Message"
               >

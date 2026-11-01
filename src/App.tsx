@@ -34,6 +34,11 @@ export const App: React.FC = () => {
 
   const musicPlayerRef = useRef<MusicPlayerHandle | null>(null);
 
+  // Scroll to top immediately whenever transitioning between sections
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentPage]);
+
   // Load saved content and settings from IndexedDB on mount
   useEffect(() => {
     async function initData() {

@@ -16,6 +16,10 @@ export const FinalMessageSection: React.FC<FinalMessageSectionProps> = ({
   onContinueToCake,
   onBack,
 }) => {
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <div className="page-view final-message-page">
       <h1 className="final-page-heading">{heading}</h1>
