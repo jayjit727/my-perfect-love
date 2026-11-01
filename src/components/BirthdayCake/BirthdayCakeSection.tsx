@@ -5,6 +5,28 @@ interface BirthdayCakeSectionProps {
   onBack: () => void;
 }
 
+// Gentle extinguish puff sound
+const playPuffSound = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.32);
+    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.33);
+  } catch {
+    // Ignore audio context error
+  }
+};
+
 export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
   onWishComplete,
   onBack,
@@ -21,7 +43,7 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const sustainedFramesRef = useRef<number>(0);
-  const ambientNoiseRef = useRef<number>(0);
+  const ambientNoiseRef = useRef<number>(10);
   const calibrationCountRef = useRef<number>(0);
   const isExtinguishingRef = useRef<boolean>(false);
 
@@ -42,7 +64,7 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
     setIsListening(false);
   };
 
-  // Cleanup on component unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanupMicrophone();
@@ -53,6 +75,7 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
     if (isExtinguishingRef.current) return;
     isExtinguishingRef.current = true;
     cleanupMicrophone();
+    playPuffSound();
 
     // Stagger extinguish the four candles smoothly
     const delays = [80, 260, 420, 580];
@@ -66,17 +89,24 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
       }, delay);
     });
 
-    // Complete the celebration after all are out
+    // Complete the celebration after all candles are blown out
     setTimeout(() => {
       setAllExtinguished(true);
-    }, 900);
+    }, 950);
   };
 
   const startMicrophone = async () => {
     try {
       setMicError(false);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Microphone not supported on this device/browser');
+      }
+
       let stream: MediaStream;
       try {
+        // Request raw mic stream without echo cancellation/noise suppression
+        // so breath turbulence is not filtered out by device noise cancellers
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: false,
@@ -85,7 +115,7 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
           },
         });
       } catch {
-        // Fallback for browsers that reject advanced audio constraints
+        // Fallback for standard mobile browsers
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
 
@@ -94,14 +124,14 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
 
-      // Resume context if browser started it in suspended state
+      // Resume context if browser started in suspended state
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
 
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.2;
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.15;
       analyserRef.current = analyser;
 
       const source = ctx.createMediaStreamSource(stream);
@@ -109,58 +139,69 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
 
       setIsListening(true);
       calibrationCountRef.current = 0;
-      ambientNoiseRef.current = 0;
+      ambientNoiseRef.current = 10;
       sustainedFramesRef.current = 0;
 
       const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
+      const freqData = new Uint8Array(bufferLength);
+      const timeData = new Uint8Array(bufferLength);
 
       const checkVolume = () => {
         if (isExtinguishingRef.current) return;
 
-        analyser.getByteFrequencyData(dataArray);
+        analyser.getByteFrequencyData(freqData);
+        analyser.getByteTimeDomainData(timeData);
 
-        // Calculate average amplitude & low-frequency wind turbulence
-        let sum = 0;
-        let lowFreqSum = 0;
-        const lowFreqCount = Math.floor(bufferLength * 0.35);
-
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-          if (i < lowFreqCount) {
-            lowFreqSum += dataArray[i];
-          }
+        // 1. Time-Domain Analysis: breath/blowing produces strong diaphragm displacement (peaks > 128)
+        let maxDeviation = 0;
+        let sumSquaredDev = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          const dev = Math.abs(timeData[i] - 128);
+          if (dev > maxDeviation) maxDeviation = dev;
+          sumSquaredDev += dev * dev;
         }
+        const rms = Math.sqrt(sumSquaredDev / timeData.length);
 
-        const currentAvg = sum / bufferLength;
-        const lowFreqAvg = lowFreqSum / lowFreqCount;
+        // 2. Low-frequency energy (bins 0 to 16, ~20Hz to ~350Hz)
+        let lowFreqSum = 0;
+        const lowBins = Math.min(16, bufferLength);
+        for (let i = 0; i < lowBins; i++) {
+          lowFreqSum += freqData[i];
+        }
+        const lowFreqAvg = lowFreqSum / lowBins;
 
         // Visual feedback meter
-        setVolumeLevel(Math.min(100, (currentAvg / 70) * 100));
+        const currentEnergy = Math.max(maxDeviation * 1.25, lowFreqAvg);
+        setVolumeLevel(Math.min(100, Math.round((currentEnergy / 55) * 100)));
 
-        // Ambient noise calibration phase (first 20 frames)
-        if (calibrationCountRef.current < 20) {
+        // Calibration phase (first 12 frames to detect ambient baseline)
+        if (calibrationCountRef.current < 12) {
           ambientNoiseRef.current =
-            (ambientNoiseRef.current * calibrationCountRef.current + currentAvg) /
+            (ambientNoiseRef.current * calibrationCountRef.current + currentEnergy) /
             (calibrationCountRef.current + 1);
           calibrationCountRef.current += 1;
           animFrameRef.current = requestAnimationFrame(checkVolume);
           return;
         }
 
-        // Blow detection criteria:
-        // Either volume spike over ambient noise OR low-frequency breath turbulence
-        const threshold = Math.max(ambientNoiseRef.current * 1.8, 22);
+        // Blow criteria:
+        // A) High time-domain peak deviation (air hitting microphone directly), OR
+        // B) Low frequency energy spike above ambient noise, OR
+        // C) High RMS
+        const isBlowing =
+          maxDeviation > 38 ||
+          lowFreqAvg > Math.max(ambientNoiseRef.current + 16, 32) ||
+          rms > 18;
 
-        if (currentAvg > threshold || lowFreqAvg > 36) {
+        if (isBlowing) {
           sustainedFramesRef.current += 1;
-          // When sound is sustained for 5 frames (~80ms), detect blowing
-          if (sustainedFramesRef.current >= 5) {
+          // When sound/breath is sustained for just 2 frames (~35ms), blow out!
+          if (sustainedFramesRef.current >= 2) {
             triggerExtinguishSequence();
             return;
           }
         } else {
-          sustainedFramesRef.current = Math.max(0, sustainedFramesRef.current - 1);
+          sustainedFramesRef.current = 0;
         }
 
         animFrameRef.current = requestAnimationFrame(checkVolume);
@@ -196,37 +237,38 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
                 className={`candle-flame ${
                   extinguished[candleIndex] ? 'is-extinguished' : ''
                 }`}
+                style={
+                  !extinguished[candleIndex] && isListening && volumeLevel > 12
+                    ? {
+                        transform: `translateX(-50%) rotate(${
+                          (candleIndex % 2 === 0 ? 1 : -1) * Math.min(25, volumeLevel * 0.35)
+                        }deg) scale(${1 - Math.min(0.2, volumeLevel * 0.003)})`,
+                        filter: `drop-shadow(0 0 ${8 + volumeLevel * 0.15}px rgba(255, 152, 0, 0.85))`,
+                      }
+                    : undefined
+                }
                 title={`Candle ${candleIndex + 1}`}
               />
               <div className="candle-wick" />
-              <div className="candle-stick">
-                <div className="candle-ribbon-stripe" />
-              </div>
+              <div className="candle-stick stripe-pattern" />
               <div className="candle-cream-dollop" />
             </div>
           ))}
         </div>
 
-        {/* Cake Tier 1 (Top Tier - Champagne Velvet & Berries) */}
+        {/* Cake Tier 1 (Top Tier - Vanilla White with Piped Edge) */}
         <div className="cake-tier-top">
-          <div className="tier-dripping-glaze">
-            <span className="glaze-drip d1" />
-            <span className="glaze-drip d2" />
-            <span className="glaze-drip d3" />
-            <span className="glaze-drip d4" />
-            <span className="glaze-drip d5" />
-          </div>
-          <div className="tier-toppings">
-            <span className="mini-berry">🍓</span>
-            <span className="mini-flower">🌸</span>
-            <span className="mini-berry">🍓</span>
+          <div className="dripping-strawberry-glaze" />
+          <div className="tier-decorations-row">
+            <span className="sugar-strawberry">🍓</span>
+            <span className="sugar-blossom">🌸</span>
+            <span className="sugar-strawberry">🍓</span>
           </div>
         </div>
 
-        {/* Cake Tier 2 (Middle Tier - Rose Cream & Pearl Garland) */}
+        {/* Cake Tier 2 (Middle Tier - Soft Pink with Rosettes) */}
         <div className="cake-tier-middle">
-          <div className="tier-scallop-trim" />
-          <div className="middle-tier-decor">
+          <div className="middle-tier-garland">
             <span className="sugar-rosette">🌸</span>
             <span className="sugar-heart">💕</span>
             <span className="sugar-rosette">🌸</span>
@@ -260,40 +302,51 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
       {!allExtinguished ? (
         <>
           <p className="cake-instructions-text">
-            Make a wish and blow out your candles!
+            Make a wish and blow out your candles! 🎂
           </p>
+
           <p className="cake-mic-hint-text">
-            Allow microphone access and gently blow towards your screen to make the
-            candles go out. ❤️
+            {isListening
+              ? '💨 Listening to your breath… blow gently towards your screen now! ❤️'
+              : 'Tap below to enable your microphone and blow out the candles, or tap to blow! ✨'}
           </p>
 
           <div className="cake-action-buttons">
             {!isListening ? (
-              <button className="romantic-btn" onClick={startMicrophone}>
-                🎤 Enable Microphone
+              <button
+                className="romantic-btn"
+                onClick={startMicrophone}
+                style={{ padding: '0.75rem 1.6rem', fontSize: '1rem', boxShadow: '0 8px 24px rgba(168, 56, 74, 0.3)' }}
+              >
+                🎤 Enable Microphone & Blow Candles
               </button>
             ) : (
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Poppins', fontSize: '0.9rem', color: '#a8384a', fontWeight: 600 }}>
-                  💨 Listening… Blow gently now!
+              <div style={{ textAlign: 'center', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                <p style={{ fontFamily: 'Poppins', fontSize: '0.92rem', color: '#a8384a', fontWeight: 600, margin: '0 0 0.4rem 0' }}>
+                  💨 Blow now! (Candles will react to your breath)
                 </p>
-                <div className="mic-meter-bar">
+                <div className="mic-meter-bar" style={{ width: '100%', height: '10px', background: 'rgba(212, 160, 160, 0.3)', borderRadius: '999px', overflow: 'hidden' }}>
                   <div
                     className="mic-meter-fill"
-                    style={{ width: `${volumeLevel}%` }}
+                    style={{
+                      width: `${volumeLevel}%`,
+                      height: '100%',
+                      background: volumeLevel > 35 ? 'linear-gradient(90deg, #ff9800, #4caf50)' : 'var(--deep-rose)',
+                      transition: 'width 0.08s ease-out',
+                    }}
                   />
                 </div>
               </div>
             )}
 
-            {/* Fallback button: Always visible or on mic error */}
+            {/* Error guidance if mic blocked */}
             {micError && (
-              <p style={{ color: '#a8384a', fontSize: '0.9rem', margin: '0.4rem 0' }}>
-                Having trouble with your microphone? No worries, my love! ❤️
+              <p style={{ color: '#a8384a', fontSize: '0.88rem', margin: '0.4rem 0' }}>
+                Microphone permission not granted or unsupported. No worries, my love! Tap the button below to blow out your candles! ❤️
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
               <button
                 className="secondary-btn"
                 onClick={onBack}
@@ -304,8 +357,9 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
               <button
                 className="secondary-btn"
                 onClick={triggerExtinguishSequence}
+                style={{ background: 'rgba(255, 245, 245, 0.95)', border: '1px solid #d4a0a0' }}
               >
-                Tap to Blow Out Candles ❤️
+                ✨ Tap to Blow Out Candles
               </button>
             </div>
           </div>
@@ -314,10 +368,10 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
         /* Celebration State after candles are extinguished */
         <div className="cake-celebration-banner">
           <h2>Yayyy! You made your wish come true! ❤️</h2>
-          <p style={{ fontFamily: 'Dancing Script', fontSize: '1.4rem', color: '#c26d7c' }}>
+          <p style={{ fontFamily: 'Dancing Script', fontSize: '1.45rem', color: '#c26d7c', margin: '0.5rem 0 1rem' }}>
             May all four candles carry your wishes to the stars ✨
           </p>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.8rem' }}>
             <button
               className="secondary-btn"
               onClick={onBack}
