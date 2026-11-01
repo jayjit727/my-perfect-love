@@ -66,25 +66,50 @@ const playPageTurnSound = () => {
   }
 };
 
+// Global in-memory cache to guarantee photos never re-trigger skeleton once loaded
+const loadedImageCache = new Set<string>();
+
+const preloadAndDecodePhoto = (src: string) => {
+  if (!src || loadedImageCache.has(src)) return;
+  const img = new Image();
+  img.src = src;
+  img.onload = () => {
+    loadedImageCache.add(src);
+    if ('decode' in img) {
+      img.decode().catch(() => {});
+    }
+  };
+};
+
 // Resilient Photo Container with Shimmer Skeleton & Instant Cache Detection
 const MemoryPhoto: React.FC<{
   src: string;
   alt: string;
   isHighPriority?: boolean;
 }> = ({ src, alt, isHighPriority = false }) => {
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(() => loadedImageCache.has(src));
   const [hasError, setHasError] = useState<boolean>(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     setHasError(false);
+    if (loadedImageCache.has(src)) {
+      setIsLoaded(true);
+      return;
+    }
     // If the browser already has this image cached/completed in memory, mark loaded instantly
     if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      loadedImageCache.add(src);
       setIsLoaded(true);
     } else {
       setIsLoaded(false);
     }
   }, [src]);
+
+  const handleLoad = () => {
+    loadedImageCache.add(src);
+    setIsLoaded(true);
+  };
 
   return (
     <div className="polaroid-frame">
@@ -126,7 +151,7 @@ const MemoryPhoto: React.FC<{
           loading={isHighPriority ? 'eager' : 'lazy'}
           fetchPriority={isHighPriority ? 'high' : 'auto'}
           decoding="async"
-          onLoad={() => setIsLoaded(true)}
+          onLoad={handleLoad}
           onError={() => setHasError(true)}
         />
       )}
@@ -154,13 +179,13 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const isLastPhoto = currentIndex === total - 1;
   const underneathPhoto = underneathIndex !== null ? activePhotos[underneathIndex] : null;
 
-  // Prioritized Sliding-Window Preloader:
-  // Preloads the upcoming 4 photos and previous 1 photo with top priority,
-  // preventing mobile network queue saturation and guaranteeing zero delay on 'Next'
+  // Prioritized Sliding-Window Preloader with GPU Decoding:
+  // Preloads and decodes the upcoming 4 photos and previous 2 photos with top priority,
+  // preventing mobile network queue saturation and guaranteeing zero delay on 'Next' and 'Previous'
   useEffect(() => {
     if (!photos || photos.length === 0) return;
 
-    // High priority: current and immediate neighbours
+    // High priority: current, upcoming 4, and previous 2
     const highPriorityIndices = [
       currentIndex,
       currentIndex + 1,
@@ -168,13 +193,13 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
       currentIndex + 3,
       currentIndex + 4,
       currentIndex - 1,
+      currentIndex - 2,
     ].filter((idx) => idx >= 0 && idx < total);
 
     highPriorityIndices.forEach((idx) => {
       const p = photos[idx];
       if (p?.data) {
-        const img = new Image();
-        img.src = resolvePhotoSrc(p.data);
+        preloadAndDecodePhoto(resolvePhotoSrc(p.data));
       }
     });
 
@@ -182,11 +207,10 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
     const timer = setTimeout(() => {
       photos.forEach((p, idx) => {
         if (!highPriorityIndices.includes(idx) && p?.data) {
-          const img = new Image();
-          img.src = resolvePhotoSrc(p.data);
+          preloadAndDecodePhoto(resolvePhotoSrc(p.data));
         }
       });
-    }, 1200);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [currentIndex, photos, total]);
@@ -212,22 +236,22 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
         setCurrentIndex((prev) => prev + 1);
         setIsTurning(null);
         setUnderneathIndex(null);
-      }, 470);
+      }, 460);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0 && !isTurning) {
-      // Current photo stays underneath while PREVIOUS photo swings in from the left
-      setUnderneathIndex(currentIndex);
-      setCurrentIndex((prev) => prev - 1);
+      // The PREVIOUS photo is placed underneath BEFORE the top page begins turning
+      setUnderneathIndex(currentIndex - 1);
       setIsTurning('prev');
       playPageTurnSound();
 
       setTimeout(() => {
+        setCurrentIndex((prev) => prev - 1);
         setIsTurning(null);
         setUnderneathIndex(null);
-      }, 470);
+      }, 460);
     }
   };
 

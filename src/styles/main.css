@@ -1128,27 +1128,30 @@ html, body {
   }
 }
 
-/* Page Turning back on Previous: sweeps back in from the left */
+/* Page Peeling Backward on Previous: turns smoothly to the right */
 .page-top.turning-prev {
-  transform-origin: left center;
-  animation: pageTurnSweepIn 0.46s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+  transform-origin: right center;
+  animation: pageTurnPeelBack 0.46s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
   pointer-events: none;
 }
 
-@keyframes pageTurnSweepIn {
+@keyframes pageTurnPeelBack {
   0% {
-    transform: rotateY(-115deg);
-    opacity: 0;
-    filter: brightness(0.85);
+    transform: rotateY(0deg);
+    opacity: 1;
+    filter: brightness(1);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   }
   50% {
     opacity: 0.95;
     filter: brightness(0.94);
+    box-shadow: 18px 10px 32px rgba(110, 36, 48, 0.2);
   }
   100% {
-    transform: rotateY(0deg);
-    opacity: 1;
-    filter: brightness(1);
+    transform: rotateY(115deg);
+    opacity: 0;
+    filter: brightness(0.85);
+    box-shadow: 28px 15px 45px rgba(110, 36, 48, 0.28);
   }
 }
 

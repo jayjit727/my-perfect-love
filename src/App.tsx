@@ -46,6 +46,23 @@ export const App: React.FC = () => {
       const img = new Image();
       img.src = photo.data.startsWith('/') ? photo.data : `/${photo.data}`;
     });
+
+    // 3. Progressively preload all 34 memories in small batches
+    let batchIndex = 6;
+    const interval = setInterval(() => {
+      if (batchIndex >= INITIAL_PHOTOS.length) {
+        clearInterval(interval);
+        return;
+      }
+      const nextBatch = INITIAL_PHOTOS.slice(batchIndex, batchIndex + 4);
+      nextBatch.forEach((p) => {
+        const img = new Image();
+        img.src = p.data.startsWith('/') ? p.data : `/${p.data}`;
+      });
+      batchIndex += 4;
+    }, 700);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Scroll to top immediately whenever transitioning between sections
