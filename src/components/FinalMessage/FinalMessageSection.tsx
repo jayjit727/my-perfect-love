@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import calendarImg from '../../assets/november-2007-calendar.jpg';
 
 interface FinalMessageSectionProps {
@@ -16,8 +16,15 @@ export const FinalMessageSection: React.FC<FinalMessageSectionProps> = ({
   onContinueToCake,
   onBack,
 }) => {
-  React.useEffect(() => {
+  const [calendarLoaded, setCalendarLoaded] = useState<boolean>(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Check if calendar is already cached/completed by browser
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setCalendarLoaded(true);
+    }
   }, []);
 
   return (
@@ -28,10 +35,24 @@ export const FinalMessageSection: React.FC<FinalMessageSectionProps> = ({
         {/* Keepsake Calendar Frame: November 2007 with 4th November Heart */}
         <div className="birthday-calendar-wrapper">
           <div className="birthday-calendar-frame">
+            {!calendarLoaded && (
+              <div className="calendar-skeleton-loader" aria-hidden="true">
+                <div className="skeleton-shimmer-wave" />
+                <div className="skeleton-center-badge">
+                  <span className="skeleton-badge-icon">📅💕</span>
+                  <span className="skeleton-badge-text">Loading calendar… ✨</span>
+                </div>
+              </div>
+            )}
             <img
+              ref={imgRef}
               src={calendarImg}
               alt="November 2007 Calendar - 4th November Birthday"
-              className="birthday-calendar-img"
+              className={`birthday-calendar-img ${calendarLoaded ? 'is-loaded' : 'is-loading'}`}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              onLoad={() => setCalendarLoaded(true)}
             />
           </div>
           <span className="calendar-subtext">The day the world was blessed with you ✨</span>

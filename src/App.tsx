@@ -20,6 +20,7 @@ import { PhotoAlbumSection } from './components/PhotoAlbum/PhotoAlbumSection';
 import { BirthdayCakeSection } from './components/BirthdayCake/BirthdayCakeSection';
 import { FinalMessageSection } from './components/FinalMessage/FinalMessageSection';
 import { CreatorModal } from './components/CreatorMode/CreatorModal';
+import calendarImg from './assets/november-2007-calendar.jpg';
 
 import './styles/main.css';
 
@@ -33,6 +34,19 @@ export const App: React.FC = () => {
   const [showCreatorModal, setShowCreatorModal] = useState<boolean>(false);
 
   const musicPlayerRef = useRef<MusicPlayerHandle | null>(null);
+
+  // Preload essential assets early in the background on initial app launch
+  useEffect(() => {
+    // 1. Preload November 2007 calendar image
+    const cal = new Image();
+    cal.src = calendarImg;
+
+    // 2. Preload first 6 memories in advance
+    INITIAL_PHOTOS.slice(0, 6).forEach((photo) => {
+      const img = new Image();
+      img.src = photo.data.startsWith('/') ? photo.data : `/${photo.data}`;
+    });
+  }, []);
 
   // Scroll to top immediately whenever transitioning between sections
   useEffect(() => {

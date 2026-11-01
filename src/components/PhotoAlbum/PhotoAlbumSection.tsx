@@ -66,6 +66,74 @@ const playPageTurnSound = () => {
   }
 };
 
+// Resilient Photo Container with Shimmer Skeleton & Instant Cache Detection
+const MemoryPhoto: React.FC<{
+  src: string;
+  alt: string;
+  isHighPriority?: boolean;
+}> = ({ src, alt, isHighPriority = false }) => {
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [hasError, setHasError] = useState<boolean>(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    setHasError(false);
+    // If the browser already has this image cached/completed in memory, mark loaded instantly
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setIsLoaded(true);
+    } else {
+      setIsLoaded(false);
+    }
+  }, [src]);
+
+  return (
+    <div className="polaroid-frame">
+      {/* Soft romantic shimmer skeleton while image is loading */}
+      {!isLoaded && !hasError && (
+        <div className="polaroid-skeleton-loader" aria-hidden="true">
+          <div className="skeleton-shimmer-wave" />
+          <div className="skeleton-center-badge">
+            <span className="skeleton-badge-icon">🌸</span>
+            <span className="skeleton-badge-text">Loading our memory… ✨</span>
+          </div>
+        </div>
+      )}
+
+      {hasError ? (
+        <div className="polaroid-error-state">
+          <span style={{ fontSize: '2rem' }}>💕</span>
+          <p style={{ margin: '0.4rem 0', fontSize: '0.92rem', color: '#8c2d3d' }}>
+            Taking a moment to load…
+          </p>
+          <button
+            type="button"
+            className="secondary-btn"
+            style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem' }}
+            onClick={() => {
+              setHasError(false);
+              setIsLoaded(false);
+            }}
+          >
+            ↻ Tap to reload
+          </button>
+        </div>
+      ) : (
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          className={`album-displayed-photo ${isLoaded ? 'is-loaded' : 'is-loading'}`}
+          loading={isHighPriority ? 'eager' : 'lazy'}
+          fetchPriority={isHighPriority ? 'high' : 'auto'}
+          decoding="async"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+        />
+      )}
+    </div>
+  );
+};
+
 export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   albumTitle,
   albumSubtitle,
@@ -86,13 +154,42 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const isLastPhoto = currentIndex === total - 1;
   const underneathPhoto = underneathIndex !== null ? activePhotos[underneathIndex] : null;
 
-  // Preload all 34 photos into browser cache on mount for instant zero-lag rendering
+  // Prioritized Sliding-Window Preloader:
+  // Preloads the upcoming 4 photos and previous 1 photo with top priority,
+  // preventing mobile network queue saturation and guaranteeing zero delay on 'Next'
   useEffect(() => {
-    photos.forEach((photo) => {
-      const img = new Image();
-      img.src = resolvePhotoSrc(photo.data);
+    if (!photos || photos.length === 0) return;
+
+    // High priority: current and immediate neighbours
+    const highPriorityIndices = [
+      currentIndex,
+      currentIndex + 1,
+      currentIndex + 2,
+      currentIndex + 3,
+      currentIndex + 4,
+      currentIndex - 1,
+    ].filter((idx) => idx >= 0 && idx < total);
+
+    highPriorityIndices.forEach((idx) => {
+      const p = photos[idx];
+      if (p?.data) {
+        const img = new Image();
+        img.src = resolvePhotoSrc(p.data);
+      }
     });
-  }, [photos]);
+
+    // Staggered background preload for the rest of the album so bandwidth stays open
+    const timer = setTimeout(() => {
+      photos.forEach((p, idx) => {
+        if (!highPriorityIndices.includes(idx) && p?.data) {
+          const img = new Image();
+          img.src = resolvePhotoSrc(p.data);
+        }
+      });
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [currentIndex, photos, total]);
 
   const triggerOpenAlbum = () => {
     if (isOpening || isOpen) return;
@@ -190,6 +287,8 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                       src={resolvePhotoSrc(photos[0].data)}
                       alt="First Memory"
                       className="book-underlay-preview-img"
+                      loading="eager"
+                      fetchPriority="high"
                     />
                   )}
                 </div>
@@ -269,13 +368,11 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                   key={`underneath-${underneathPhoto.id || underneathIndex}`}
                   className="album-single-page page-underneath"
                 >
-                  <div className="polaroid-frame">
-                    <img
-                      src={resolvePhotoSrc(underneathPhoto.data)}
-                      alt={underneathPhoto.caption || 'Memory'}
-                      className="album-displayed-photo"
-                    />
-                  </div>
+                  <MemoryPhoto
+                    src={resolvePhotoSrc(underneathPhoto.data)}
+                    alt={underneathPhoto.caption || 'Memory'}
+                    isHighPriority={true}
+                  />
                   {underneathPhoto.caption && (
                     <p className="album-caption-text">{underneathPhoto.caption}</p>
                   )}
@@ -288,13 +385,11 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                   key={`top-${currentPhoto.id || currentIndex}`}
                   className={`album-single-page page-top ${isTurning ? `turning-${isTurning}` : ''}`}
                 >
-                  <div className="polaroid-frame">
-                    <img
-                      src={resolvePhotoSrc(currentPhoto.data)}
-                      alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
-                      className="album-displayed-photo"
-                    />
-                  </div>
+                  <MemoryPhoto
+                    src={resolvePhotoSrc(currentPhoto.data)}
+                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
+                    isHighPriority={true}
+                  />
                   {currentPhoto.caption && (
                     <p className="album-caption-text">{currentPhoto.caption}</p>
                   )}
