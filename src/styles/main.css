@@ -1158,11 +1158,11 @@ html, body {
 .polaroid-frame {
   background: #ffffff;
   padding: 12px 12px 16px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  max-width: 330px;
   height: clamp(310px, 48vh, 395px);
   display: flex;
   align-items: center;
@@ -1170,6 +1170,7 @@ html, body {
   position: relative;
   transition: box-shadow 0.3s ease;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .polaroid-frame:hover {
@@ -1189,7 +1190,7 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  z-index: 2;
+  z-index: 1;
 }
 
 .skeleton-shimmer-wave {
@@ -1216,7 +1217,7 @@ html, body {
 
 .skeleton-center-badge {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1253,7 +1254,7 @@ html, body {
   justify-content: center;
   padding: 1.5rem;
   text-align: center;
-  z-index: 3;
+  z-index: 4;
 }
 
 .album-displayed-photo {
@@ -1263,15 +1264,9 @@ html, body {
   object-fit: contain;
   display: block;
   user-select: none;
-  transition: opacity 0.35s ease;
-}
-
-.album-displayed-photo.is-loading {
-  opacity: 0;
-}
-
-.album-displayed-photo.is-loaded {
-  opacity: 1;
+  position: relative;
+  z-index: 3;
+  opacity: 1 !important;
 }
 
 .album-caption-text {
@@ -2138,7 +2133,10 @@ html, body {
     min-height: 380px;
   }
   .polaroid-frame {
+    width: 100%;
+    max-width: 275px;
     height: clamp(260px, 44vh, 320px);
+    padding: 8px 8px 14px 8px;
   }
   .album-displayed-photo {
     max-height: 100%;

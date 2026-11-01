@@ -89,22 +89,16 @@ const MemoryPhoto: React.FC<{
 }> = ({ src, alt, isHighPriority = false }) => {
   const [isLoaded, setIsLoaded] = useState<boolean>(() => loadedImageCache.has(src));
   const [hasError, setHasError] = useState<boolean>(false);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
-  useEffect(() => {
-    setHasError(false);
-    if (loadedImageCache.has(src)) {
-      setIsLoaded(true);
-      return;
+  // Synchronous callback ref: immediately detects images loaded from browser memory cache
+  const handleImgRef = (el: HTMLImageElement | null) => {
+    if (el) {
+      if (el.complete && el.naturalWidth > 0) {
+        loadedImageCache.add(src);
+        setIsLoaded(true);
+      }
     }
-    // If the browser already has this image cached/completed in memory, mark loaded instantly
-    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
-      loadedImageCache.add(src);
-      setIsLoaded(true);
-    } else {
-      setIsLoaded(false);
-    }
-  }, [src]);
+  };
 
   const handleLoad = () => {
     loadedImageCache.add(src);
@@ -144,10 +138,10 @@ const MemoryPhoto: React.FC<{
         </div>
       ) : (
         <img
-          ref={imgRef}
+          ref={handleImgRef}
           src={src}
           alt={alt}
-          className={`album-displayed-photo ${isLoaded ? 'is-loaded' : 'is-loading'}`}
+          className="album-displayed-photo"
           loading={isHighPriority ? 'eager' : 'lazy'}
           fetchPriority={isHighPriority ? 'high' : 'auto'}
           decoding="async"
