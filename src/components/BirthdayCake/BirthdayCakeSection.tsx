@@ -99,26 +99,38 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
     try {
       setMicError(false);
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Microphone not supported on this device/browser');
-      }
+      // Helper with cross-browser and legacy WebKit support
+      const getMediaStream = async (): Promise<MediaStream> => {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          try {
+            return await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+              },
+            });
+          } catch {
+            return await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
+        }
 
-      let stream: MediaStream;
-      try {
-        // Request raw mic stream without echo cancellation/noise suppression
-        // so breath turbulence is not filtered out by device noise cancellers
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-        });
-      } catch {
-        // Fallback for standard mobile browsers
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
+        // Legacy fallback for older WebKit / mobile browsers
+        const legacyNav = navigator as unknown as {
+          webkitGetUserMedia?: (constraints: MediaStreamConstraints, success: (stream: MediaStream) => void, error: (err: unknown) => void) => void;
+          mozGetUserMedia?: (constraints: MediaStreamConstraints, success: (stream: MediaStream) => void, error: (err: unknown) => void) => void;
+        };
+        const legacyFn = legacyNav.webkitGetUserMedia || legacyNav.mozGetUserMedia;
+        if (legacyFn) {
+          return new Promise((resolve, reject) => {
+            legacyFn.call(navigator, { audio: true }, resolve, reject);
+          });
+        }
 
+        throw new Error('Microphone requires a secure connection (HTTPS).');
+      };
+
+      const stream = await getMediaStream();
       streamRef.current = stream;
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioCtx();
@@ -341,8 +353,8 @@ export const BirthdayCakeSection: React.FC<BirthdayCakeSectionProps> = ({
 
             {/* Error guidance if mic blocked */}
             {micError && (
-              <p style={{ color: '#a8384a', fontSize: '0.88rem', margin: '0.4rem 0' }}>
-                Microphone permission not granted or unsupported. No worries, my love! Tap the button below to blow out your candles! ❤️
+              <p style={{ color: '#a8384a', fontSize: '0.88rem', margin: '0.4rem 0', maxWidth: '340px', lineHeight: 1.4 }}>
+                Microphone requires a secure connection (HTTPS) on mobile. On your live Vercel link, it will prompt for permission! You can also tap below to blow out your candles! ❤️
               </p>
             )}
 
