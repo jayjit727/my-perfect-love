@@ -3,7 +3,7 @@
    For Moumita ❤️ — 4 November 2026
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Hind+Siliguri:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600&display=swap');
 
 :root {
   --soft-pink: #fdf0f2;
@@ -1651,11 +1651,55 @@ html, body {
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  padding: 2.5rem;
+  padding: 2.2rem 2.4rem;
   box-shadow: var(--shadow-deep);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.3rem;
+  align-items: center;
+}
+
+/* Keepsake Birthday Calendar Frame */
+.birthday-calendar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.2rem auto 0.6rem;
+  width: 100%;
+}
+
+.birthday-calendar-frame {
+  max-width: 275px;
+  width: 100%;
+  border-radius: 14px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid rgba(212, 160, 160, 0.45);
+  box-shadow: 0 10px 28px rgba(168, 56, 74, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.birthday-calendar-frame:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 14px 34px rgba(168, 56, 74, 0.18);
+}
+
+.birthday-calendar-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.calendar-subtext {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.18rem;
+  color: #a8384a;
+  letter-spacing: 0.35px;
+  text-align: center;
 }
 
 .final-paragraphs-box p {
@@ -1663,13 +1707,34 @@ html, body {
   font-size: 1.18rem;
   line-height: 1.85;
   color: #4a3434;
+  text-align: center;
+  margin: 0;
 }
 
 .final-love-signature {
   font-family: 'Dancing Script', cursive;
   font-size: 2.4rem;
   color: var(--deep-rose);
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
+  text-align: center;
+}
+
+/* User's Romantic Bengali Vow */
+.bengali-love-vow {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Tiro Bangla', 'Segoe UI', sans-serif;
+  font-size: 1.28rem;
+  font-weight: 600;
+  line-height: 1.75;
+  color: #8c2436;
+  background: linear-gradient(135deg, rgba(255, 246, 248, 0.95), rgba(255, 238, 242, 0.95));
+  border: 1.5px dashed rgba(212, 140, 155, 0.6);
+  border-radius: 12px;
+  padding: 0.9rem 1.4rem;
+  margin: 0.4rem auto 0;
+  max-width: 95%;
+  box-shadow: 0 4px 18px rgba(168, 56, 74, 0.08);
+  letter-spacing: 0.25px;
+  text-align: center;
 }
 
 .romantic-flowers-banner {
@@ -1945,5 +2010,13 @@ html, body {
   }
   .final-page-heading {
     font-size: 1.8rem;
+  }
+  .birthday-calendar-frame {
+    max-width: 235px;
+  }
+  .bengali-love-vow {
+    font-size: 1.12rem;
+    padding: 0.75rem 1rem;
+    line-height: 1.65;
   }
 }
