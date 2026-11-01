@@ -40,7 +40,7 @@ const playBookOpenChime = () => {
       osc.stop(startTime + 0.65);
     });
   } catch {
-    // Ignore audio context errors if blocked by browser
+    // Ignore audio context errors
   }
 };
 
@@ -54,13 +54,13 @@ const playPageTurnSound = () => {
     const gain = ctx.createGain();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(320, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.14);
-    gain.gain.setValueAtTime(0.03, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
+    osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.035, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.15);
+    osc.stop(ctx.currentTime + 0.16);
   } catch {
     // Ignore
   }
@@ -76,13 +76,23 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isOpening, setIsOpening] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [turningDirection, setTurningDirection] = useState<'next' | 'prev' | null>(null);
+  const [isTurning, setIsTurning] = useState<'next' | 'prev' | null>(null);
+  const [underneathIndex, setUnderneathIndex] = useState<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const activePhotos = photos.length > 0 ? photos : [];
   const total = activePhotos.length;
   const currentPhoto = activePhotos[currentIndex];
   const isLastPhoto = currentIndex === total - 1;
+  const underneathPhoto = underneathIndex !== null ? activePhotos[underneathIndex] : null;
+
+  // Preload all 34 photos into browser cache on mount for instant zero-lag rendering
+  useEffect(() => {
+    photos.forEach((photo) => {
+      const img = new Image();
+      img.src = resolvePhotoSrc(photo.data);
+    });
+  }, [photos]);
 
   const triggerOpenAlbum = () => {
     if (isOpening || isOpen) return;
@@ -94,21 +104,33 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
     }, 850);
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
+  const handleNext = () => {
+    if (currentIndex < total - 1 && !isTurning) {
+      // The NEXT photo is placed underneath BEFORE the top page begins turning
+      setUnderneathIndex(currentIndex + 1);
+      setIsTurning('next');
       playPageTurnSound();
-      setTurningDirection('prev');
-      setCurrentIndex((prev) => prev - 1);
-      setTimeout(() => setTurningDirection(null), 400);
+
+      setTimeout(() => {
+        setCurrentIndex((prev) => prev + 1);
+        setIsTurning(null);
+        setUnderneathIndex(null);
+      }, 470);
     }
   };
 
-  const handleNext = () => {
-    if (currentIndex < total - 1) {
+  const handlePrev = () => {
+    if (currentIndex > 0 && !isTurning) {
+      // Current photo stays underneath while PREVIOUS photo swings in from the left
+      setUnderneathIndex(currentIndex);
+      setCurrentIndex((prev) => prev - 1);
+      setIsTurning('prev');
       playPageTurnSound();
-      setTurningDirection('next');
-      setCurrentIndex((prev) => prev + 1);
-      setTimeout(() => setTurningDirection(null), 400);
+
+      setTimeout(() => {
+        setIsTurning(null);
+        setUnderneathIndex(null);
+      }, 470);
     }
   };
 
@@ -126,7 +148,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, total]);
+  }, [isOpen, currentIndex, total, isTurning]);
 
   // Mobile swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -221,7 +243,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
           </div>
         </div>
       ) : (
-        /* Open Book Experience: One photo per page with 3D page-turn navigation */
+        /* Open Book Experience: True 2-layer page turn where next photo is ALREADY resting underneath */
         <div className="open-album-container">
           <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
             <h2 className="book-cover-title" style={{ fontSize: '1.9rem', margin: 0 }}>
@@ -240,23 +262,45 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             {/* Silk Ribbon Bookmark */}
             <div className="album-ribbon-bookmark" title="Bookmark" />
 
-            {currentPhoto && (
-              <div
-                key={currentPhoto.id || currentIndex}
-                className={`album-single-page ${turningDirection ? `turn-${turningDirection}` : ''}`}
-              >
-                <div className="polaroid-frame">
-                  <img
-                    src={resolvePhotoSrc(currentPhoto.data)}
-                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
-                    className="album-displayed-photo"
-                  />
+            <div className="album-pages-stage">
+              {/* Layer 1: Underneath Photo — ALREADY in place, waiting to be uncovered */}
+              {underneathPhoto && (
+                <div
+                  key={`underneath-${underneathPhoto.id || underneathIndex}`}
+                  className="album-single-page page-underneath"
+                >
+                  <div className="polaroid-frame">
+                    <img
+                      src={resolvePhotoSrc(underneathPhoto.data)}
+                      alt={underneathPhoto.caption || 'Memory'}
+                      className="album-displayed-photo"
+                    />
+                  </div>
+                  {underneathPhoto.caption && (
+                    <p className="album-caption-text">{underneathPhoto.caption}</p>
+                  )}
                 </div>
-                {currentPhoto.caption && (
-                  <p className="album-caption-text">{currentPhoto.caption}</p>
-                )}
-              </div>
-            )}
+              )}
+
+              {/* Layer 2: Top Photo — peels away smoothly to reveal underneath photo */}
+              {currentPhoto && (
+                <div
+                  key={`top-${currentPhoto.id || currentIndex}`}
+                  className={`album-single-page page-top ${isTurning ? `turning-${isTurning}` : ''}`}
+                >
+                  <div className="polaroid-frame">
+                    <img
+                      src={resolvePhotoSrc(currentPhoto.data)}
+                      alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
+                      className="album-displayed-photo"
+                    />
+                  </div>
+                  {currentPhoto.caption && (
+                    <p className="album-caption-text">{currentPhoto.caption}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Navigation Controls: Previous, Counter, Next / Continue */}
@@ -264,7 +308,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             <button
               className="secondary-btn"
               onClick={handlePrev}
-              disabled={currentIndex === 0}
+              disabled={currentIndex === 0 || !!isTurning}
               aria-label="Previous photo"
             >
               ← Previous
@@ -278,6 +322,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
               <button
                 className="romantic-btn"
                 onClick={handleNext}
+                disabled={!!isTurning}
                 aria-label="Next photo"
               >
                 Next →
