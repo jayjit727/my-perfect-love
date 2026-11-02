@@ -59,13 +59,20 @@ export const LoveLetterSection: React.FC<LoveLetterSectionProps> = ({
               </div>
             )}
 
-            <div className="letter-closing-text">
-              {formatLetterParagraph(closing)}
-              {!closing.includes('Jb') && (
-                <div className="letter-signature-jb">
-                  your beloved Jb 🧿
-                </div>
-              )}
+            <div className="letter-closing-section">
+              <div className="letter-closing-quote">
+                {formatLetterParagraph(
+                  closing
+                    ? closing
+                        .replace(/\n?your beloved Jb 🧿/g, '')
+                        .replace(/\n?❤️\s*♾️/g, '')
+                        .trim() + ' ❤️ ♾️'
+                    : 'You are someone I want beside me, not just for a moment, but for a lifetime. ❤️ ♾️'
+                )}
+              </div>
+              <div className="letter-signature-jb">
+                your beloved Jb 🧿
+              </div>
             </div>
           </div>
         </div>
