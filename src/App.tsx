@@ -21,6 +21,9 @@ import { BirthdayCakeSection } from './components/BirthdayCake/BirthdayCakeSecti
 import { FinalMessageSection } from './components/FinalMessage/FinalMessageSection';
 import { CreatorModal } from './components/CreatorMode/CreatorModal';
 import calendarImg from './assets/november-2007-calendar.jpg';
+import mjbCrestImg from './assets/mjb-heart-crest.png';
+import myMjHeartDecor from './assets/album-decor-my-mj-heart.png';
+import { preloadBatch } from './utils/preloader';
 
 import './styles/main.css';
 
@@ -37,32 +40,20 @@ export const App: React.FC = () => {
 
   // Preload essential assets early in the background on initial app launch
   useEffect(() => {
-    // 1. Preload November 2007 calendar image
-    const cal = new Image();
-    cal.src = calendarImg;
+    // 1. Preload heart crests, calendar, and key emblems with top priority
+    preloadBatch([mjbCrestImg, myMjHeartDecor, calendarImg]);
 
-    // 2. Preload first 6 memories in advance
-    INITIAL_PHOTOS.slice(0, 6).forEach((photo) => {
-      const img = new Image();
-      img.src = photo.data.startsWith('/') ? photo.data : `/${photo.data}`;
-    });
-
-    // 3. Progressively preload all 34 memories in small batches
-    let batchIndex = 6;
-    const interval = setInterval(() => {
-      if (batchIndex >= INITIAL_PHOTOS.length) {
-        clearInterval(interval);
-        return;
+    // 2. Preload all 34 memory photos immediately with GPU decoding
+    const allPhotoUrls = INITIAL_PHOTOS.map((photo) => {
+      if (!photo?.data) return '';
+      if (photo.data.startsWith('http') || photo.data.startsWith('data:') || photo.data.startsWith('blob:')) {
+        return photo.data;
       }
-      const nextBatch = INITIAL_PHOTOS.slice(batchIndex, batchIndex + 4);
-      nextBatch.forEach((p) => {
-        const img = new Image();
-        img.src = p.data.startsWith('/') ? p.data : `/${p.data}`;
-      });
-      batchIndex += 4;
-    }, 700);
+      const clean = photo.data.startsWith('/') ? photo.data.slice(1) : photo.data;
+      return `${import.meta.env.BASE_URL}${clean}`;
+    }).filter(Boolean);
 
-    return () => clearInterval(interval);
+    preloadBatch(allPhotoUrls);
   }, []);
 
   // Scroll to top immediately whenever transitioning between sections

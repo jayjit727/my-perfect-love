@@ -1160,41 +1160,6 @@ html, body {
   z-index: 2;
 }
 
-/* 4 Ornate Gold Filigree Corners */
-.decor-gold-corner {
-  position: absolute;
-  width: 44px;
-  height: 38px;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 3;
-  opacity: 0.92;
-  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
-}
-
-.decor-gold-corner.top-left {
-  top: 12px;
-  left: 12px;
-}
-
-.decor-gold-corner.top-right {
-  top: 12px;
-  right: 12px;
-  transform: scaleX(-1);
-}
-
-.decor-gold-corner.bottom-left {
-  bottom: 12px;
-  left: 12px;
-  transform: scaleY(-1);
-}
-
-.decor-gold-corner.bottom-right {
-  bottom: 12px;
-  right: 12px;
-  transform: scale(-1, -1);
-}
-
 /* Silk Ribbon Bookmark */
 .album-ribbon-bookmark {
   position: absolute;
@@ -1214,19 +1179,6 @@ html, body {
   transform: translateY(4px);
 }
 
-/* Top-Left Floral Bouquet with Cascading Pink Ribbon */
-.decor-left-floral {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 145px;
-  max-width: 22%;
-  height: auto;
-  pointer-events: none;
-  z-index: 2;
-  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.12));
-}
-
 /* Top-Right 'My Mj' Heart Emblem with Rose */
 .decor-my-mj-heart {
   position: absolute;
@@ -1239,66 +1191,6 @@ html, body {
   z-index: 2;
   filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.1));
   animation: floatHeart 3.5s infinite ease-in-out;
-}
-
-/* Bottom-Right Floral Bouquet */
-.decor-right-floral {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  width: 130px;
-  max-width: 20%;
-  height: auto;
-  pointer-events: none;
-  z-index: 2;
-  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.12));
-}
-
-/* Scattered Romantic Floating Petals */
-.decor-floating-petals {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.floating-petal {
-  position: absolute;
-  width: 16px;
-  height: 22px;
-  background: radial-gradient(ellipse at 40% 30%, #ffccd5 0%, #f79aa8 60%, #e06d82 100%);
-  border-radius: 50% 50% 50% 10% / 60% 60% 40% 20%;
-  opacity: 0.72;
-  filter: drop-shadow(0 2px 4px rgba(168, 56, 74, 0.15));
-}
-
-.floating-petal.p1 {
-  top: 34%;
-  left: 14%;
-  transform: rotate(32deg) scale(0.95);
-  animation: floatHeart 4s infinite ease-in-out;
-}
-
-.floating-petal.p2 {
-  top: 50%;
-  right: 15%;
-  transform: rotate(-25deg) scale(0.85);
-  animation: floatHeart 4.5s infinite ease-in-out 1s;
-}
-
-.floating-petal.p3 {
-  bottom: 26%;
-  left: 18%;
-  transform: rotate(55deg) scale(0.75);
-  animation: floatHeart 3.8s infinite ease-in-out 0.5s;
-}
-
-.floating-petal.p4 {
-  bottom: 40%;
-  right: 18%;
-  transform: rotate(-40deg) scale(0.8);
-  animation: floatHeart 4.2s infinite ease-in-out 1.5s;
 }
 
 .album-pages-stage {
@@ -2379,23 +2271,11 @@ html, body {
     padding: 1.8rem 1.4rem 1.4rem 1.4rem;
     min-height: 480px;
   }
-  .decor-left-floral {
-    width: 120px;
-    max-width: 24%;
-    top: 10px;
-    left: 8px;
-  }
   .decor-my-mj-heart {
     width: 90px;
     max-width: 18%;
     top: 24px;
     right: 28px;
-  }
-  .decor-right-floral {
-    width: 110px;
-    max-width: 22%;
-    bottom: 8px;
-    right: 8px;
   }
   .album-ribbon-bookmark {
     right: 32px;
@@ -2479,55 +2359,19 @@ html, body {
     border-radius: 10px;
     border-width: 1px;
   }
-  .decor-gold-corner {
-    width: 28px;
-    height: 24px;
-  }
-  .decor-gold-corner.top-left {
-    top: 6px;
-    left: 6px;
-  }
-  .decor-gold-corner.top-right {
-    top: 6px;
-    right: 6px;
-  }
-  .decor-gold-corner.bottom-left {
-    bottom: 6px;
-    left: 6px;
-  }
-  .decor-gold-corner.bottom-right {
-    bottom: 6px;
-    right: 6px;
-  }
   .album-ribbon-bookmark {
     right: 18px;
     top: -4px;
     width: 16px;
     height: 36px;
   }
-  .decor-left-floral {
-    width: 78px;
-    max-width: none;
-    top: 4px;
-    left: 4px;
-    opacity: 0.88;
-    z-index: 1;
-  }
   .decor-my-mj-heart {
     width: 62px;
     max-width: none;
     top: 12px;
     right: 26px;
-    opacity: 0.88;
-    z-index: 1;
-  }
-  .decor-right-floral {
-    width: 80px;
-    max-width: none;
-    bottom: 6px;
-    right: 4px;
-    opacity: 0.88;
-    z-index: 1;
+    opacity: 0.95;
+    z-index: 2;
   }
   .album-pages-stage {
     min-height: 360px;
@@ -2559,9 +2403,6 @@ html, body {
   }
   .album-caption-divider {
     max-width: 150px;
-  }
-  .floating-petal {
-    transform: scale(0.7);
   }
   .cake-stage {
     transform: scale(0.88);

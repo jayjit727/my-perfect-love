@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Photo } from '../../types';
 import mjbCrestImg from '../../assets/mjb-heart-crest.png';
-import leftFloralDecor from '../../assets/album-decor-left-floral.png';
 import myMjHeartDecor from '../../assets/album-decor-my-mj-heart.png';
-import rightFloralDecor from '../../assets/album-decor-right-floral.png';
-import goldCornerDecor from '../../assets/album-decor-gold-corner.png';
+import { globalImageCache, preloadBatch } from '../../utils/preloader';
 
 interface PhotoAlbumSectionProps {
   albumTitle: string;
@@ -71,48 +69,33 @@ const playPageTurnSound = () => {
   }
 };
 
-// Global in-memory cache to guarantee photos never re-trigger skeleton once loaded
-const loadedImageCache = new Set<string>();
-
-const preloadAndDecodePhoto = (src: string) => {
-  if (!src || loadedImageCache.has(src)) return;
-  const img = new Image();
-  img.src = src;
-  img.onload = () => {
-    loadedImageCache.add(src);
-    if ('decode' in img) {
-      img.decode().catch(() => {});
-    }
-  };
-};
-
-// Resilient Photo Container with Shimmer Skeleton & Instant Cache Detection
+// Resilient Photo Container with Instant GPU-Decoded Rendering
 const MemoryPhoto: React.FC<{
   src: string;
   alt: string;
   isHighPriority?: boolean;
-}> = ({ src, alt, isHighPriority = false }) => {
-  const [isLoaded, setIsLoaded] = useState<boolean>(() => loadedImageCache.has(src));
+}> = ({ src, alt }) => {
+  const [isLoaded, setIsLoaded] = useState<boolean>(() => globalImageCache.has(src));
   const [hasError, setHasError] = useState<boolean>(false);
 
-  // Synchronous callback ref: immediately detects images loaded from browser memory cache
+  // Synchronous callback ref: immediately detects images already loaded in browser memory
   const handleImgRef = (el: HTMLImageElement | null) => {
     if (el) {
       if (el.complete && el.naturalWidth > 0) {
-        loadedImageCache.add(src);
-        setIsLoaded(true);
+        globalImageCache.add(src);
+        if (!isLoaded) setIsLoaded(true);
       }
     }
   };
 
   const handleLoad = () => {
-    loadedImageCache.add(src);
+    globalImageCache.add(src);
     setIsLoaded(true);
   };
 
   return (
     <div className="polaroid-frame">
-      {/* Soft romantic shimmer skeleton while image is loading */}
+      {/* Soft romantic shimmer skeleton ONLY when image is genuinely downloading for the first time */}
       {!isLoaded && !hasError && (
         <div className="polaroid-skeleton-loader" aria-hidden="true">
           <div className="skeleton-shimmer-wave" />
@@ -147,9 +130,9 @@ const MemoryPhoto: React.FC<{
           src={src}
           alt={alt}
           className="album-displayed-photo"
-          loading={isHighPriority ? 'eager' : 'lazy'}
-          fetchPriority={isHighPriority ? 'high' : 'auto'}
-          decoding="async"
+          loading="eager"
+          fetchPriority="high"
+          decoding="sync"
           onLoad={handleLoad}
           onError={() => setHasError(true)}
         />
@@ -176,43 +159,24 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const total = activePhotos.length;
   const currentPhoto = activePhotos[currentIndex];
   const isLastPhoto = currentIndex === total - 1;
-  const underneathPhoto = underneathIndex !== null ? activePhotos[underneathIndex] : null;
 
-  // Prioritized Sliding-Window Preloader with GPU Decoding:
-  // Preloads and decodes the upcoming 4 photos and previous 2 photos with top priority,
-  // preventing mobile network queue saturation and guaranteeing zero delay on 'Next' and 'Previous'
+  // The next photo is ALREADY loaded in the DOM underneath so turning is instant with ZERO delay
+  const nextPhoto = currentIndex < total - 1 ? activePhotos[currentIndex + 1] : null;
+  const prevPhoto = currentIndex > 0 ? activePhotos[currentIndex - 1] : null;
+  const underneathPhoto = isTurning === 'prev' 
+    ? prevPhoto 
+    : (underneathIndex !== null ? activePhotos[underneathIndex] : nextPhoto);
+
+  // Instant preloading and GPU-decoding of all album photos and emblems on mount
   useEffect(() => {
     if (!photos || photos.length === 0) return;
-
-    // High priority: current, upcoming 4, and previous 2
-    const highPriorityIndices = [
-      currentIndex,
-      currentIndex + 1,
-      currentIndex + 2,
-      currentIndex + 3,
-      currentIndex + 4,
-      currentIndex - 1,
-      currentIndex - 2,
-    ].filter((idx) => idx >= 0 && idx < total);
-
-    highPriorityIndices.forEach((idx) => {
-      const p = photos[idx];
-      if (p?.data) {
-        preloadAndDecodePhoto(resolvePhotoSrc(p.data));
-      }
-    });
-
-    // Staggered background preload for the rest of the album so bandwidth stays open
-    const timer = setTimeout(() => {
-      photos.forEach((p, idx) => {
-        if (!highPriorityIndices.includes(idx) && p?.data) {
-          preloadAndDecodePhoto(resolvePhotoSrc(p.data));
-        }
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [currentIndex, photos, total]);
+    const allUrls = [
+      mjbCrestImg,
+      myMjHeartDecor,
+      ...photos.map((p) => resolvePhotoSrc(p.data)).filter(Boolean),
+    ];
+    preloadBatch(allUrls);
+  }, [photos]);
 
   const triggerOpenAlbum = () => {
     if (isOpening || isOpen) return;
@@ -226,7 +190,6 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
 
   const handleNext = () => {
     if (currentIndex < total - 1 && !isTurning) {
-      // The NEXT photo is placed underneath BEFORE the top page begins turning
       setUnderneathIndex(currentIndex + 1);
       setIsTurning('next');
       playPageTurnSound();
@@ -235,13 +198,12 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
         setCurrentIndex((prev) => prev + 1);
         setIsTurning(null);
         setUnderneathIndex(null);
-      }, 460);
+      }, 420);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0 && !isTurning) {
-      // The PREVIOUS photo is placed underneath BEFORE the top page begins turning
       setUnderneathIndex(currentIndex - 1);
       setIsTurning('prev');
       playPageTurnSound();
@@ -250,7 +212,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
         setCurrentIndex((prev) => prev - 1);
         setIsTurning(null);
         setUnderneathIndex(null);
-      }, 460);
+      }, 420);
     }
   };
 
@@ -329,7 +291,14 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 <div className="book-corner-gold bottom-right" />
 
                 <div className="book-cover-crest-wrap">
-                  <img src={mjbCrestImg} alt="MJB Floral Crest" className="book-cover-crest-img" />
+                  <img
+                    src={mjbCrestImg}
+                    alt="MJB Floral Crest"
+                    className="book-cover-crest-img"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="sync"
+                  />
                 </div>
                 <h2 className="book-cover-title">{albumTitle || 'Our Memories'}</h2>
                 <p className="book-cover-subtitle">{albumSubtitle || 'A collection of beautiful moments'}</p>
@@ -393,46 +362,32 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             {/* Ornate Gold Inset Border Line */}
             <div className="book-page-gold-border" aria-hidden="true" />
 
-            {/* 4 Ornate Gold Filigree Corners */}
-            <img src={goldCornerDecor} alt="" className="decor-gold-corner top-left" aria-hidden="true" />
-            <img src={goldCornerDecor} alt="" className="decor-gold-corner top-right" aria-hidden="true" />
-            <img src={goldCornerDecor} alt="" className="decor-gold-corner bottom-left" aria-hidden="true" />
-            <img src={goldCornerDecor} alt="" className="decor-gold-corner bottom-right" aria-hidden="true" />
-
             {/* Silk Ribbon Bookmark */}
             <div className="album-ribbon-bookmark" title="Bookmark" />
 
-            {/* Top-Left Floral Bouquet with Cascading Pink Ribbon */}
-            <img src={leftFloralDecor} alt="" className="decor-left-floral" aria-hidden="true" />
-
             {/* Top-Right 'My Mj' Romantic Heart Emblem with Rose */}
-            <img src={myMjHeartDecor} alt="" className="decor-my-mj-heart" aria-hidden="true" />
-
-            {/* Bottom-Right Floral Bouquet (Sunflower, Rose, Lily) */}
-            <img src={rightFloralDecor} alt="" className="decor-right-floral" aria-hidden="true" />
-
-            {/* Floating Soft Rose Petals */}
-            <div className="decor-floating-petals" aria-hidden="true">
-              <span className="floating-petal p1" />
-              <span className="floating-petal p2" />
-              <span className="floating-petal p3" />
-              <span className="floating-petal p4" />
-            </div>
+            <img
+              src={myMjHeartDecor}
+              alt="My Mj"
+              className="decor-my-mj-heart"
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
+            />
 
             <div className="album-pages-stage">
               {/* Layer 1: Underneath Photo — ALREADY in place, waiting to be uncovered */}
               {underneathPhoto && (
                 <div
-                  key={`underneath-${underneathPhoto.id || underneathIndex}`}
+                  key={`underneath-${underneathPhoto.id || underneathIndex || (currentIndex + 1)}`}
                   className="album-single-page page-underneath"
-                  style={{ visibility: isTurning ? 'visible' : 'hidden' }}
                 >
                   <MemoryPhoto
                     src={resolvePhotoSrc(underneathPhoto.data)}
                     alt={underneathPhoto.caption || 'Memory'}
                     isHighPriority={true}
                   />
-                  {underneathPhoto.caption && (
+                  {underneathPhoto.caption && isTurning && (
                     <div className="album-caption-wrapper">
                       <p className="album-caption-text">{underneathPhoto.caption}</p>
                       <div className="album-caption-divider">
