@@ -75,6 +75,12 @@ export async function loadContent(): Promise<SiteContent> {
         if (!loaded.letterClosing || !loaded.letterClosing.includes('Jb')) {
           loaded.letterClosing = DEFAULT_CONTENT.letterClosing;
         }
+        if (!loaded.finalParagraphs || !loaded.finalParagraphs.some((p: string) => p.includes('husband'))) {
+          loaded.finalParagraphs = DEFAULT_CONTENT.finalParagraphs;
+        }
+        if (!loaded.finalLove || !loaded.finalLove.includes('Moumita')) {
+          loaded.finalLove = DEFAULT_CONTENT.finalLove;
+        }
         resolve(loaded);
       } else {
         resolve(DEFAULT_CONTENT);

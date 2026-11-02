@@ -116,8 +116,9 @@ export const DEFAULT_CONTENT: SiteContent = {
   finalParagraphs: [
     'May your life always be filled with happiness, beautiful memories, success, and endless smiles.',
     'No matter how many photographs we take or how many memories we create, there will always be more beautiful moments waiting for us.',
+    'You are my beloved, and I cannot wait for the day I officially become your husband.',
   ],
-  finalLove: 'I love you. ❤️♾️',
+  finalLove: 'I love you, Moumita. ❤️ ♾️',
 
   musicVolume: 0.35,
 };
