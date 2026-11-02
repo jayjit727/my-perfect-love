@@ -1096,12 +1096,32 @@ html, body {
 /* Open Book Page View */
 .open-album-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 840px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.4rem;
+  gap: 1.2rem;
   animation: albumAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: 0 auto;
+}
+
+.album-page-main-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #8c2738;
+  margin: 0;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.album-page-sub-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.3rem;
+  color: #a85260;
+  margin: 0.2rem 0 0.5rem 0;
+  line-height: 1.2;
 }
 
 @keyframes albumAppear {
@@ -1116,30 +1136,73 @@ html, body {
 }
 
 .album-open-book {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 1.8rem 1.6rem;
-  box-shadow: 0 18px 50px rgba(110, 36, 48, 0.14), 0 2px 8px rgba(0,0,0,0.03);
-  border: 1px solid rgba(212, 160, 160, 0.28);
+  background: linear-gradient(135deg, #fffcf9 0%, #fdf5ef 50%, #faeee5 100%);
+  border-radius: 16px;
+  padding: 2.2rem 3rem 1.8rem 3rem;
+  box-shadow: 0 20px 55px rgba(110, 36, 48, 0.16), 0 2px 10px rgba(0,0,0,0.04);
+  border: 2px solid rgba(212, 175, 55, 0.45);
   width: 100%;
-  min-height: 460px;
+  min-height: 520px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
-  perspective: 1200px;
-  background-image: 
-    linear-gradient(90deg, transparent 49.2%, rgba(0,0,0,0.04) 50%, transparent 50.8%),
-    linear-gradient(135deg, #ffffff 0%, #fffbf8 100%);
+  perspective: 1400px;
+  overflow: visible;
 }
 
-/* Ribbon Bookmark */
+/* Ornate Inset Gold Border */
+.book-page-gold-border {
+  position: absolute;
+  inset: 12px;
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 4 Ornate Gold Filigree Corners */
+.decor-gold-corner {
+  position: absolute;
+  width: 48px;
+  height: 42px;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.92;
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
+}
+
+.decor-gold-corner.top-left {
+  top: 12px;
+  left: 12px;
+}
+
+.decor-gold-corner.top-right {
+  top: 12px;
+  right: 12px;
+  transform: scaleX(-1);
+}
+
+.decor-gold-corner.bottom-left {
+  bottom: 12px;
+  left: 12px;
+  transform: scaleY(-1);
+}
+
+.decor-gold-corner.bottom-right {
+  bottom: 12px;
+  right: 12px;
+  transform: scale(-1, -1);
+}
+
+/* Silk Ribbon Bookmark */
 .album-ribbon-bookmark {
   position: absolute;
-  right: 28px;
-  top: -6px;
-  width: 22px;
+  right: 48px;
+  top: -4px;
+  width: 24px;
   height: 48px;
   background: linear-gradient(180deg, #d44d63, #a8384a);
   border-radius: 0 0 2px 2px;
@@ -1151,6 +1214,94 @@ html, body {
 
 .album-ribbon-bookmark:hover {
   transform: translateY(4px);
+}
+
+/* Top-Left Floral Bouquet with Cascading Pink Ribbon */
+.decor-left-floral {
+  position: absolute;
+  top: 18px;
+  left: 16px;
+  width: 175px;
+  max-width: 26%;
+  height: auto;
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.12));
+  transition: transform 0.3s ease;
+}
+
+/* Top-Right 'My Mj' Heart Emblem with Rose */
+.decor-my-mj-heart {
+  position: absolute;
+  top: 48px;
+  right: 48px;
+  width: 130px;
+  max-width: 18%;
+  height: auto;
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.1));
+  animation: floatHeart 3.5s infinite ease-in-out;
+}
+
+/* Bottom-Right Floral Bouquet */
+.decor-right-floral {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  width: 165px;
+  max-width: 24%;
+  height: auto;
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.12));
+}
+
+/* Scattered Romantic Floating Petals */
+.decor-floating-petals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.floating-petal {
+  position: absolute;
+  width: 16px;
+  height: 22px;
+  background: radial-gradient(ellipse at 40% 30%, #ffccd5 0%, #f79aa8 60%, #e06d82 100%);
+  border-radius: 50% 50% 50% 10% / 60% 60% 40% 20%;
+  opacity: 0.72;
+  filter: drop-shadow(0 2px 4px rgba(168, 56, 74, 0.15));
+}
+
+.floating-petal.p1 {
+  top: 36%;
+  left: 14%;
+  transform: rotate(32deg) scale(0.95);
+  animation: floatHeart 4s infinite ease-in-out;
+}
+
+.floating-petal.p2 {
+  top: 52%;
+  right: 15%;
+  transform: rotate(-25deg) scale(0.85);
+  animation: floatHeart 4.5s infinite ease-in-out 1s;
+}
+
+.floating-petal.p3 {
+  bottom: 28%;
+  left: 19%;
+  transform: rotate(55deg) scale(0.75);
+  animation: floatHeart 3.8s infinite ease-in-out 0.5s;
+}
+
+.floating-petal.p4 {
+  bottom: 42%;
+  right: 21%;
+  transform: rotate(15deg) scale(0.8);
+  animation: floatHeart 4.2s infinite ease-in-out 1.5s;
 }
 
 .album-pages-stage {
@@ -1242,24 +1393,34 @@ html, body {
 
 .polaroid-frame {
   background: #ffffff;
-  padding: 12px 12px 16px 12px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 8px 8px 10px 8px;
+  border-radius: 14px;
+  box-shadow: 
+    0 0 0 2.5px #ffffff,
+    0 0 0 4.5px rgba(212, 175, 55, 0.75),
+    0 14px 38px rgba(168, 56, 74, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1.5px solid #d4af37;
   width: 100%;
-  max-width: 330px;
-  height: clamp(310px, 48vh, 395px);
+  max-width: 310px;
+  height: clamp(310px, 46vh, 395px);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;
   box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .polaroid-frame:hover {
-  box-shadow: 0 12px 30px rgba(110, 36, 48, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 0 0 2.5px #ffffff,
+    0 0 0 4.5px rgba(212, 175, 55, 0.9),
+    0 18px 45px rgba(168, 56, 74, 0.18),
+    0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 /* Skeleton Loading State for Polaroid Frame */
@@ -1345,7 +1506,7 @@ html, body {
 .album-displayed-photo {
   max-width: 100%;
   max-height: 100%;
-  border-radius: 4px;
+  border-radius: 10px;
   object-fit: contain;
   display: block;
   user-select: none;
@@ -1354,22 +1515,53 @@ html, body {
   opacity: 1 !important;
 }
 
+.album-caption-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: 90%;
+  margin: 0.4rem auto 0;
+}
+
 .album-caption-text {
-  font-family: 'Cormorant Garamond', 'Lora', 'Playfair Display', Georgia, serif;
-  font-size: 1.28rem;
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.22rem;
   font-weight: 500;
   font-style: italic;
-  color: #3b2227;
+  color: #3b2027;
   text-align: center;
-  min-height: 3.2rem;
+  min-height: 2.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2rem 1.2rem;
-  line-height: 1.5;
-  letter-spacing: 0.35px;
-  max-width: 92%;
-  margin: 0 auto;
+  padding: 0.2rem 0.8rem;
+  line-height: 1.48;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.album-caption-divider {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 220px;
+  margin-top: 0.1rem;
+}
+
+.album-caption-divider .divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.55), transparent);
+}
+
+.album-caption-divider .divider-icon {
+  font-size: 0.95rem;
+  color: #d44d63;
+  line-height: 1;
 }
 
 .album-navigation-bar {
@@ -2180,6 +2372,34 @@ html, body {
   .letter-date-heading {
     font-size: 1.3rem;
   }
+  .open-album-container {
+    max-width: 600px;
+  }
+  .album-open-book {
+    padding: 1.8rem 1.4rem 1.4rem 1.4rem;
+    min-height: 480px;
+  }
+  .decor-left-floral {
+    width: 135px;
+    max-width: 25%;
+    top: 10px;
+    left: 8px;
+  }
+  .decor-my-mj-heart {
+    width: 95px;
+    max-width: 18%;
+    top: 26px;
+    right: 28px;
+  }
+  .decor-right-floral {
+    width: 125px;
+    max-width: 24%;
+    bottom: 8px;
+    right: 8px;
+  }
+  .album-ribbon-bookmark {
+    right: 32px;
+  }
   .final-page-heading {
     font-size: 2.2rem;
   }
@@ -2234,25 +2454,102 @@ html, body {
   .cover-heart-mini {
     font-size: 1.05rem;
   }
+  .open-album-container {
+    max-width: 360px;
+    gap: 0.9rem;
+  }
+  .album-page-main-title {
+    font-size: 1.85rem;
+  }
+  .album-page-sub-title {
+    font-size: 1.15rem;
+    margin-bottom: 0.3rem;
+  }
   .album-open-book {
-    padding: 1rem;
-    min-height: 360px;
+    padding: 1.3rem 0.6rem 0.9rem 0.6rem;
+    min-height: 440px;
+    border-radius: 14px;
+    border-width: 1.5px;
+  }
+  .book-page-gold-border {
+    inset: 8px;
+    border-radius: 10px;
+    border-width: 1px;
+  }
+  .decor-gold-corner {
+    width: 32px;
+    height: 28px;
+  }
+  .decor-gold-corner.top-left {
+    top: 8px;
+    left: 8px;
+  }
+  .decor-gold-corner.top-right {
+    top: 8px;
+    right: 8px;
+  }
+  .decor-gold-corner.bottom-left {
+    bottom: 8px;
+    left: 8px;
+  }
+  .decor-gold-corner.bottom-right {
+    bottom: 8px;
+    right: 8px;
+  }
+  .album-ribbon-bookmark {
+    right: 20px;
+    top: -4px;
+    width: 18px;
+    height: 38px;
+  }
+  .decor-left-floral {
+    width: 95px;
+    max-width: none;
+    top: 2px;
+    left: 2px;
+    opacity: 0.95;
+    z-index: 4;
+  }
+  .decor-my-mj-heart {
+    width: 68px;
+    max-width: none;
+    top: 10px;
+    right: 32px;
+    opacity: 0.95;
+    z-index: 4;
+  }
+  .decor-right-floral {
+    width: 96px;
+    max-width: none;
+    bottom: 4px;
+    right: 2px;
+    opacity: 0.95;
+    z-index: 4;
   }
   .album-pages-stage {
-    min-height: 380px;
+    min-height: 360px;
   }
   .polaroid-frame {
     width: 100%;
-    max-width: 275px;
-    height: clamp(260px, 44vh, 320px);
-    padding: 8px 8px 14px 8px;
-  }
-  .album-displayed-photo {
-    max-height: 100%;
+    max-width: 250px;
+    height: clamp(260px, 42vh, 315px);
+    padding: 6px 6px 8px 6px;
+    box-shadow: 
+      0 0 0 2px #ffffff,
+      0 0 0 3.5px rgba(212, 175, 55, 0.75),
+      0 10px 24px rgba(168, 56, 74, 0.12);
   }
   .album-caption-text {
-    font-size: 1.12rem;
-    padding: 0.25rem 0.6rem;
+    font-size: 1.05rem;
+    min-height: 2.4rem;
+    padding: 0.1rem 0.4rem;
+    line-height: 1.42;
+  }
+  .album-caption-divider {
+    max-width: 160px;
+  }
+  .floating-petal {
+    transform: scale(0.7);
   }
   .cake-stage {
     transform: scale(0.88);

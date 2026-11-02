@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Photo } from '../../types';
 import mjbCrestImg from '../../assets/mjb-heart-crest.png';
+import leftFloralDecor from '../../assets/album-decor-left-floral.png';
+import myMjHeartDecor from '../../assets/album-decor-my-mj-heart.png';
+import rightFloralDecor from '../../assets/album-decor-right-floral.png';
+import goldCornerDecor from '../../assets/album-decor-gold-corner.png';
 
 interface PhotoAlbumSectionProps {
   albumTitle: string;
@@ -373,11 +377,11 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
         /* Open Book Experience: True 2-layer page turn where next photo is ALREADY resting underneath */
         <div className="open-album-container">
           <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
-            <h2 className="book-cover-title" style={{ fontSize: '1.9rem', margin: 0 }}>
+            <h2 className="album-page-main-title">
               {albumTitle || 'Our Memories'}
             </h2>
-            <p className="book-cover-subtitle" style={{ fontSize: '1.15rem', margin: '0.2rem 0 0.6rem 0' }}>
-              {albumSubtitle || 'Every moment with you is precious ❤️'}
+            <p className="album-page-sub-title">
+              {albumSubtitle || 'A collection of beautiful moments 💖'}
             </p>
           </div>
 
@@ -386,8 +390,34 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
+            {/* Ornate Gold Inset Border Line */}
+            <div className="book-page-gold-border" aria-hidden="true" />
+
+            {/* 4 Ornate Gold Filigree Corners */}
+            <img src={goldCornerDecor} alt="" className="decor-gold-corner top-left" aria-hidden="true" />
+            <img src={goldCornerDecor} alt="" className="decor-gold-corner top-right" aria-hidden="true" />
+            <img src={goldCornerDecor} alt="" className="decor-gold-corner bottom-left" aria-hidden="true" />
+            <img src={goldCornerDecor} alt="" className="decor-gold-corner bottom-right" aria-hidden="true" />
+
             {/* Silk Ribbon Bookmark */}
             <div className="album-ribbon-bookmark" title="Bookmark" />
+
+            {/* Top-Left Floral Bouquet with Cascading Pink Ribbon */}
+            <img src={leftFloralDecor} alt="" className="decor-left-floral" aria-hidden="true" />
+
+            {/* Top-Right 'My Mj' Romantic Heart Emblem with Rose */}
+            <img src={myMjHeartDecor} alt="" className="decor-my-mj-heart" aria-hidden="true" />
+
+            {/* Bottom-Right Floral Bouquet (Sunflower, Rose, Lily) */}
+            <img src={rightFloralDecor} alt="" className="decor-right-floral" aria-hidden="true" />
+
+            {/* Floating Soft Rose Petals */}
+            <div className="decor-floating-petals" aria-hidden="true">
+              <span className="floating-petal p1" />
+              <span className="floating-petal p2" />
+              <span className="floating-petal p3" />
+              <span className="floating-petal p4" />
+            </div>
 
             <div className="album-pages-stage">
               {/* Layer 1: Underneath Photo — ALREADY in place, waiting to be uncovered */}
@@ -402,7 +432,14 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                     isHighPriority={true}
                   />
                   {underneathPhoto.caption && (
-                    <p className="album-caption-text">{underneathPhoto.caption}</p>
+                    <div className="album-caption-wrapper">
+                      <p className="album-caption-text">{underneathPhoto.caption}</p>
+                      <div className="album-caption-divider">
+                        <span className="divider-line" />
+                        <span className="divider-icon">💕</span>
+                        <span className="divider-line" />
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -419,7 +456,14 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                     isHighPriority={true}
                   />
                   {currentPhoto.caption && (
-                    <p className="album-caption-text">{currentPhoto.caption}</p>
+                    <div className="album-caption-wrapper">
+                      <p className="album-caption-text">{currentPhoto.caption}</p>
+                      <div className="album-caption-divider">
+                        <span className="divider-line" />
+                        <span className="divider-icon">💕</span>
+                        <span className="divider-line" />
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
