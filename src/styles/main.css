@@ -844,8 +844,8 @@ html, body {
 }
 
 .book-3d-object {
-  width: 310px;
-  height: 410px;
+  width: 320px;
+  height: 440px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -906,16 +906,16 @@ html, body {
 .book-front-cover {
   position: absolute;
   inset: 0;
-  background: linear-gradient(145deg, #fffcf8 0%, #faebd7 100%);
+  background: linear-gradient(145deg, #fffcf8 0%, #faede1 100%);
   border-radius: 4px 14px 14px 4px;
   box-shadow: -6px 0 15px rgba(0,0,0,0.05), 14px 16px 40px rgba(110, 36, 48, 0.18);
   border: 1px solid rgba(212, 160, 160, 0.38);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem 1.2rem 1.2rem 1.4rem;
   transform-origin: left center;
   transform-style: preserve-3d;
   transition: transform 0.85s cubic-bezier(0.25, 1, 0.3, 1), box-shadow 0.85s ease;
@@ -1014,26 +1014,83 @@ html, body {
   }
 }
 
+.book-cover-crest-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.2rem;
+  margin-bottom: 0.35rem;
+}
+
+.book-cover-crest-img {
+  width: 172px;
+  max-width: 80%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(168, 56, 74, 0.12));
+  transition: transform 0.3s ease;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.album-3d-stage:hover .book-cover-crest-img {
+  transform: scale(1.02);
+}
+
 .book-cover-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.1rem;
-  font-weight: 600;
-  color: var(--deep-rose);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.05rem;
+  font-weight: 700;
+  color: #8c2738;
   font-style: italic;
-  margin-bottom: 0.5rem;
+  margin: 0.15rem 0 0.2rem;
+  line-height: 1.15;
 }
 
 .book-cover-subtitle {
   font-family: 'Dancing Script', cursive;
-  font-size: 1.3rem;
-  color: var(--muted-rose);
-  margin-bottom: 1.2rem;
+  font-size: 1.25rem;
+  color: #a85260;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
 }
 
-.book-cover-heart {
-  font-size: 2.5rem;
-  color: var(--deep-rose);
-  animation: pulseHint 2s infinite ease;
+.book-cover-heart-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.65rem;
+}
+
+.cover-heart-mini {
+  font-size: 1.25rem;
+  line-height: 1;
+  animation: pulseHint 2s infinite ease-in-out;
+}
+
+.cover-book-duo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.cover-heart-float {
+  font-size: 1.35rem;
+  animation: floatHeart 2.5s infinite ease-in-out;
+}
+
+@keyframes floatHeart {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(5deg);
+  }
 }
 
 /* Open Book Page View */
@@ -2152,6 +2209,30 @@ html, body {
   .closed-book-cover {
     width: 240px;
     height: 330px;
+  }
+  .book-3d-object {
+    width: 275px;
+    height: 395px;
+  }
+  .book-front-cover {
+    padding: 1.1rem 0.9rem 1rem 1.1rem;
+  }
+  .book-cover-crest-img {
+    width: 140px;
+  }
+  .book-cover-title {
+    font-size: 1.8rem;
+    margin: 0.1rem 0 0.15rem;
+  }
+  .book-cover-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 0.35rem;
+  }
+  .cover-book-duo {
+    font-size: 1.55rem;
+  }
+  .cover-heart-mini {
+    font-size: 1.05rem;
   }
   .album-open-book {
     padding: 1rem;

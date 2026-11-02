@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Photo } from '../../types';
+import mjbCrestImg from '../../assets/mjb-heart-crest.png';
 
 interface PhotoAlbumSectionProps {
   albumTitle: string;
@@ -323,9 +324,18 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 <div className="book-corner-gold bottom-left" />
                 <div className="book-corner-gold bottom-right" />
 
+                <div className="book-cover-crest-wrap">
+                  <img src={mjbCrestImg} alt="MJB Floral Crest" className="book-cover-crest-img" />
+                </div>
                 <h2 className="book-cover-title">{albumTitle || 'Our Memories'}</h2>
-                <p className="book-cover-subtitle">{albumSubtitle || 'A collection of beautiful moments ❤️'}</p>
-                <div className="book-cover-heart">📖💕</div>
+                <p className="book-cover-subtitle">{albumSubtitle || 'A collection of beautiful moments'}</p>
+                <div className="book-cover-heart-group">
+                  <div className="cover-heart-mini">💖</div>
+                  <div className="cover-book-duo">
+                    <span>📖</span>
+                    <span className="cover-heart-float">💕</span>
+                  </div>
+                </div>
                 <p className="envelope-hint-text">
                   {isOpening ? 'Opening our memories… ✨' : 'Tap to open our album ✨'}
                 </p>
