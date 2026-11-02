@@ -1212,31 +1212,24 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 0.9rem;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
 }
 
-/* Resting Page (stable single layer when not turning) */
-.album-single-page.page-resting {
-  z-index: 2;
-  transform: rotateY(0deg);
-  opacity: 1;
-}
-
-/* Underneath Photo (already resting in place, waiting to be revealed or covered) */
+/* Underneath Photo (already resting in place, waiting to be revealed) */
 .album-single-page.page-underneath {
   z-index: 1;
-  transform: rotateY(0deg);
-  opacity: 1;
   pointer-events: none;
 }
 
-/* Turning Next: Outgoing page peels away to the left uncovering underneath page */
-.album-single-page.page-turning-next {
+/* Top Photo (peels open smoothly to the left on next) */
+.album-single-page.page-top {
   z-index: 3;
+  transform-style: preserve-3d;
+}
+
+/* Page Peeling Away on Next: physically turns like a real book page */
+.page-top.turning-next {
   transform-origin: left center;
-  animation: pageTurnPeelAway 0.32s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
+  animation: pageTurnPeelAway 0.46s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
   pointer-events: none;
 }
 
@@ -1260,15 +1253,14 @@ html, body {
   }
 }
 
-/* Turning Previous: Current page peels away to the RIGHT side uncovering the previous page */
-.album-single-page.page-turning-prev {
-  z-index: 3;
+/* Page Peeling Backward on Previous: turns smoothly to the right */
+.page-top.turning-prev {
   transform-origin: right center;
-  animation: pageTurnPeelRight 0.32s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
+  animation: pageTurnPeelBack 0.46s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
   pointer-events: none;
 }
 
-@keyframes pageTurnPeelRight {
+@keyframes pageTurnPeelBack {
   0% {
     transform: rotateY(0deg);
     opacity: 1;

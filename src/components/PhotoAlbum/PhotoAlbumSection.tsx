@@ -120,6 +120,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const [isOpening, setIsOpening] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isTurning, setIsTurning] = useState<'next' | 'prev' | null>(null);
+  const [underneathIndex, setUnderneathIndex] = useState<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const activePhotos = photos.length > 0 ? photos : [];
@@ -127,9 +128,12 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const currentPhoto = activePhotos[currentIndex];
   const isLastPhoto = currentIndex === total - 1;
 
-  // Next and previous photo targets for seamless two-layer turning
+  // The next photo is ALREADY loaded in the DOM underneath so turning is instant with ZERO delay
   const nextPhoto = currentIndex < total - 1 ? activePhotos[currentIndex + 1] : null;
   const prevPhoto = currentIndex > 0 ? activePhotos[currentIndex - 1] : null;
+  const underneathPhoto = isTurning === 'prev' 
+    ? prevPhoto 
+    : (underneathIndex !== null ? activePhotos[underneathIndex] : nextPhoto);
 
   // Background preload and GPU decoding
   useEffect(() => {
@@ -154,25 +158,29 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
 
   const handleNext = () => {
     if (currentIndex < total - 1 && !isTurning) {
+      setUnderneathIndex(currentIndex + 1);
       setIsTurning('next');
       playPageTurnSound();
 
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setIsTurning(null);
-      }, 320);
+        setUnderneathIndex(null);
+      }, 420);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0 && !isTurning) {
+      setUnderneathIndex(currentIndex - 1);
       setIsTurning('prev');
       playPageTurnSound();
 
       setTimeout(() => {
         setCurrentIndex((prev) => prev - 1);
         setIsTurning(null);
-      }, 320);
+        setUnderneathIndex(null);
+      }, 420);
     }
   };
 
@@ -364,19 +372,19 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             />
 
             <div className="album-pages-stage">
-              {/* NEXT TURN: Underneath is nextPhoto (resting), Top is currentPhoto (peeling away to left) */}
-              {isTurning === 'next' && nextPhoto && (
+              {/* Layer 1: Underneath Photo — ALREADY in place, waiting to be uncovered */}
+              {underneathPhoto && (
                 <div
-                  key={`underneath-next-${nextPhoto.id}`}
+                  key={`underneath-${underneathPhoto.id || underneathIndex || (currentIndex + 1)}`}
                   className="album-single-page page-underneath"
                 >
                   <MemoryPhoto
-                    src={resolvePhotoSrc(nextPhoto.data)}
-                    alt={nextPhoto.caption || 'Next Memory'}
+                    src={resolvePhotoSrc(underneathPhoto.data)}
+                    alt={underneathPhoto.caption || 'Memory'}
                   />
-                  {nextPhoto.caption && (
+                  {underneathPhoto.caption && isTurning && (
                     <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{nextPhoto.caption}</p>
+                      <p className="album-caption-text">{underneathPhoto.caption}</p>
                       <div className="album-caption-divider">
                         <span className="divider-line" />
                         <span className="divider-icon">💕</span>
@@ -387,79 +395,11 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 </div>
               )}
 
-              {/* PREV TURN: Underneath is prevPhoto (resting), Top is currentPhoto (peeling away to right) */}
-              {isTurning === 'prev' && prevPhoto && (
+              {/* Layer 2: Top Photo — peels away smoothly to reveal underneath photo */}
+              {currentPhoto && (
                 <div
-                  key={`underneath-prev-${prevPhoto.id}`}
-                  className="album-single-page page-underneath"
-                >
-                  <MemoryPhoto
-                    src={resolvePhotoSrc(prevPhoto.data)}
-                    alt={prevPhoto.caption || 'Previous Memory'}
-                  />
-                  {prevPhoto.caption && (
-                    <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{prevPhoto.caption}</p>
-                      <div className="album-caption-divider">
-                        <span className="divider-line" />
-                        <span className="divider-icon">💕</span>
-                        <span className="divider-line" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ACTIVE / TURNING TOP LAYER */}
-              {isTurning === 'next' && currentPhoto && (
-                <div
-                  key={`turning-next-${currentPhoto.id}`}
-                  className="album-single-page page-turning-next"
-                >
-                  <MemoryPhoto
-                    src={resolvePhotoSrc(currentPhoto.data)}
-                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
-                  />
-                  {currentPhoto.caption && (
-                    <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{currentPhoto.caption}</p>
-                      <div className="album-caption-divider">
-                        <span className="divider-line" />
-                        <span className="divider-icon">💕</span>
-                        <span className="divider-line" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {isTurning === 'prev' && currentPhoto && (
-                <div
-                  key={`turning-prev-${currentPhoto.id}`}
-                  className="album-single-page page-turning-prev"
-                >
-                  <MemoryPhoto
-                    src={resolvePhotoSrc(currentPhoto.data)}
-                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
-                  />
-                  {currentPhoto.caption && (
-                    <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{currentPhoto.caption}</p>
-                      <div className="album-caption-divider">
-                        <span className="divider-line" />
-                        <span className="divider-icon">💕</span>
-                        <span className="divider-line" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* RESTING STATE (Not turning): Single stable page with zero duplicate nodes */}
-              {!isTurning && currentPhoto && (
-                <div
-                  key={`resting-${currentPhoto.id}`}
-                  className="album-single-page page-resting"
+                  key={`top-${currentPhoto.id || currentIndex}`}
+                  className={`album-single-page page-top ${isTurning ? `turning-${isTurning}` : ''}`}
                 >
                   <MemoryPhoto
                     src={resolvePhotoSrc(currentPhoto.data)}
