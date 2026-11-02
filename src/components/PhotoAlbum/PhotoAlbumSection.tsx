@@ -387,19 +387,19 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 </div>
               )}
 
-              {/* PREV TURN: Underneath is currentPhoto (resting), Top is prevPhoto (peeling in from left) */}
-              {isTurning === 'prev' && currentPhoto && (
+              {/* PREV TURN: Underneath is prevPhoto (resting), Top is currentPhoto (peeling away to right) */}
+              {isTurning === 'prev' && prevPhoto && (
                 <div
-                  key={`underneath-prev-${currentPhoto.id}`}
+                  key={`underneath-prev-${prevPhoto.id}`}
                   className="album-single-page page-underneath"
                 >
                   <MemoryPhoto
-                    src={resolvePhotoSrc(currentPhoto.data)}
-                    alt={currentPhoto.caption || 'Current Memory'}
+                    src={resolvePhotoSrc(prevPhoto.data)}
+                    alt={prevPhoto.caption || 'Previous Memory'}
                   />
-                  {currentPhoto.caption && (
+                  {prevPhoto.caption && (
                     <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{currentPhoto.caption}</p>
+                      <p className="album-caption-text">{prevPhoto.caption}</p>
                       <div className="album-caption-divider">
                         <span className="divider-line" />
                         <span className="divider-icon">💕</span>
@@ -433,18 +433,18 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 </div>
               )}
 
-              {isTurning === 'prev' && prevPhoto && (
+              {isTurning === 'prev' && currentPhoto && (
                 <div
-                  key={`turning-prev-${prevPhoto.id}`}
+                  key={`turning-prev-${currentPhoto.id}`}
                   className="album-single-page page-turning-prev"
                 >
                   <MemoryPhoto
-                    src={resolvePhotoSrc(prevPhoto.data)}
-                    alt={prevPhoto.caption || `Memory ${currentIndex}`}
+                    src={resolvePhotoSrc(currentPhoto.data)}
+                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
                   />
-                  {prevPhoto.caption && (
+                  {currentPhoto.caption && (
                     <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{prevPhoto.caption}</p>
+                      <p className="album-caption-text">{currentPhoto.caption}</p>
                       <div className="album-caption-divider">
                         <span className="divider-line" />
                         <span className="divider-icon">💕</span>
