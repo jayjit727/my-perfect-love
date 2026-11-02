@@ -425,6 +425,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 <div
                   key={`underneath-${underneathPhoto.id || underneathIndex}`}
                   className="album-single-page page-underneath"
+                  style={{ visibility: isTurning ? 'visible' : 'hidden' }}
                 >
                   <MemoryPhoto
                     src={resolvePhotoSrc(underneathPhoto.data)}
