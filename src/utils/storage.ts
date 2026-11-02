@@ -2,7 +2,7 @@ import type { SiteContent, Photo } from '../types';
 import { DEFAULT_CONTENT, INITIAL_PHOTOS } from '../types';
 
 const DB_NAME = 'BirthdaySurpriseDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORES = {
   content: 'content',
@@ -119,6 +119,7 @@ export async function loadPhotos(): Promise<Photo[]> {
         stored.length !== INITIAL_PHOTOS.length ||
         stored.some(
           (p) =>
+            !p.data ||
             p.caption.includes('After 4 years') ||
             p.caption.includes('Day two') ||
             p.caption.includes('Looking forward to thousands')

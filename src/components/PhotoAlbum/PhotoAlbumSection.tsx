@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Photo } from '../../types';
 import mjbCrestImg from '../../assets/mjb-heart-crest.png';
 import myMjHeartDecor from '../../assets/album-decor-my-mj-heart.png';
-import { globalImageCache, preloadBatch } from '../../utils/preloader';
+import { preloadBatch } from '../../utils/preloader';
 
 interface PhotoAlbumSectionProps {
   albumTitle: string;
@@ -69,43 +69,16 @@ const playPageTurnSound = () => {
   }
 };
 
-// Resilient Photo Container with Instant GPU-Decoded Rendering
+// High-performance Instant Polaroid Photo Component
+// No blocking skeleton overlay: cached images render at frame 0 with 0ms delay
 const MemoryPhoto: React.FC<{
   src: string;
   alt: string;
-  isHighPriority?: boolean;
 }> = ({ src, alt }) => {
-  const [isLoaded, setIsLoaded] = useState<boolean>(() => globalImageCache.has(src));
   const [hasError, setHasError] = useState<boolean>(false);
-
-  // Synchronous callback ref: immediately detects images already loaded in browser memory
-  const handleImgRef = (el: HTMLImageElement | null) => {
-    if (el) {
-      if (el.complete && el.naturalWidth > 0) {
-        globalImageCache.add(src);
-        if (!isLoaded) setIsLoaded(true);
-      }
-    }
-  };
-
-  const handleLoad = () => {
-    globalImageCache.add(src);
-    setIsLoaded(true);
-  };
 
   return (
     <div className="polaroid-frame">
-      {/* Soft romantic shimmer skeleton ONLY when image is genuinely downloading for the first time */}
-      {!isLoaded && !hasError && (
-        <div className="polaroid-skeleton-loader" aria-hidden="true">
-          <div className="skeleton-shimmer-wave" />
-          <div className="skeleton-center-badge">
-            <span className="skeleton-badge-icon">🌸</span>
-            <span className="skeleton-badge-text">Loading our memory… ✨</span>
-          </div>
-        </div>
-      )}
-
       {hasError ? (
         <div className="polaroid-error-state">
           <span style={{ fontSize: '2rem' }}>💕</span>
@@ -116,24 +89,19 @@ const MemoryPhoto: React.FC<{
             type="button"
             className="secondary-btn"
             style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem' }}
-            onClick={() => {
-              setHasError(false);
-              setIsLoaded(false);
-            }}
+            onClick={() => setHasError(false)}
           >
             ↻ Tap to reload
           </button>
         </div>
       ) : (
         <img
-          ref={handleImgRef}
           src={src}
           alt={alt}
           className="album-displayed-photo"
           loading="eager"
           fetchPriority="high"
           decoding="sync"
-          onLoad={handleLoad}
           onError={() => setHasError(true)}
         />
       )}
@@ -152,7 +120,6 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const [isOpening, setIsOpening] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isTurning, setIsTurning] = useState<'next' | 'prev' | null>(null);
-  const [underneathIndex, setUnderneathIndex] = useState<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const activePhotos = photos.length > 0 ? photos : [];
@@ -160,14 +127,11 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
   const currentPhoto = activePhotos[currentIndex];
   const isLastPhoto = currentIndex === total - 1;
 
-  // The next photo is ALREADY loaded in the DOM underneath so turning is instant with ZERO delay
+  // Next and previous photo targets for seamless two-layer turning
   const nextPhoto = currentIndex < total - 1 ? activePhotos[currentIndex + 1] : null;
   const prevPhoto = currentIndex > 0 ? activePhotos[currentIndex - 1] : null;
-  const underneathPhoto = isTurning === 'prev' 
-    ? prevPhoto 
-    : (underneathIndex !== null ? activePhotos[underneathIndex] : nextPhoto);
 
-  // Instant preloading and GPU-decoding of all album photos and emblems on mount
+  // Background preload and GPU decoding
   useEffect(() => {
     if (!photos || photos.length === 0) return;
     const allUrls = [
@@ -190,29 +154,25 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
 
   const handleNext = () => {
     if (currentIndex < total - 1 && !isTurning) {
-      setUnderneathIndex(currentIndex + 1);
       setIsTurning('next');
       playPageTurnSound();
 
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setIsTurning(null);
-        setUnderneathIndex(null);
-      }, 420);
+      }, 320);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0 && !isTurning) {
-      setUnderneathIndex(currentIndex - 1);
       setIsTurning('prev');
       playPageTurnSound();
 
       setTimeout(() => {
         setCurrentIndex((prev) => prev - 1);
         setIsTurning(null);
-        setUnderneathIndex(null);
-      }, 420);
+      }, 320);
     }
   };
 
@@ -250,6 +210,34 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
 
   return (
     <div className="page-view album-section-page">
+      {/* Hidden Permanent In-DOM Preloader Stack: Forces browser to keep ALL 34 photos GPU-decoded in memory */}
+      <div
+        style={{
+          position: 'fixed',
+          top: -9999,
+          left: -9999,
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
+      >
+        <img src={mjbCrestImg} alt="" loading="eager" fetchPriority="high" decoding="sync" />
+        <img src={myMjHeartDecor} alt="" loading="eager" fetchPriority="high" decoding="sync" />
+        {activePhotos.map((p) => (
+          <img
+            key={`album-permanent-cache-${p.id}`}
+            src={resolvePhotoSrc(p.data)}
+            alt=""
+            loading="eager"
+            fetchPriority="high"
+            decoding="sync"
+          />
+        ))}
+      </div>
+
       {!isOpen ? (
         /* 3D Interactive Opening Book Experience */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.4rem' }}>
@@ -343,7 +331,7 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
           </div>
         </div>
       ) : (
-        /* Open Book Experience: True 2-layer page turn where next photo is ALREADY resting underneath */
+        /* Open Book Experience: Instant Zero-Delay Symmetric Page Turns */
         <div className="open-album-container">
           <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
             <h2 className="album-page-main-title">
@@ -376,20 +364,19 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
             />
 
             <div className="album-pages-stage">
-              {/* Layer 1: Underneath Photo — ALREADY in place, waiting to be uncovered */}
-              {underneathPhoto && (
+              {/* NEXT TURN: Underneath is nextPhoto (resting), Top is currentPhoto (peeling away to left) */}
+              {isTurning === 'next' && nextPhoto && (
                 <div
-                  key={`underneath-${underneathPhoto.id || underneathIndex || (currentIndex + 1)}`}
+                  key={`underneath-next-${nextPhoto.id}`}
                   className="album-single-page page-underneath"
                 >
                   <MemoryPhoto
-                    src={resolvePhotoSrc(underneathPhoto.data)}
-                    alt={underneathPhoto.caption || 'Memory'}
-                    isHighPriority={true}
+                    src={resolvePhotoSrc(nextPhoto.data)}
+                    alt={nextPhoto.caption || 'Next Memory'}
                   />
-                  {underneathPhoto.caption && isTurning && (
+                  {nextPhoto.caption && (
                     <div className="album-caption-wrapper">
-                      <p className="album-caption-text">{underneathPhoto.caption}</p>
+                      <p className="album-caption-text">{nextPhoto.caption}</p>
                       <div className="album-caption-divider">
                         <span className="divider-line" />
                         <span className="divider-icon">💕</span>
@@ -400,16 +387,83 @@ export const PhotoAlbumSection: React.FC<PhotoAlbumSectionProps> = ({
                 </div>
               )}
 
-              {/* Layer 2: Top Photo — peels away smoothly to reveal underneath photo */}
-              {currentPhoto && (
+              {/* PREV TURN: Underneath is currentPhoto (resting), Top is prevPhoto (peeling in from left) */}
+              {isTurning === 'prev' && currentPhoto && (
                 <div
-                  key={`top-${currentPhoto.id || currentIndex}`}
-                  className={`album-single-page page-top ${isTurning ? `turning-${isTurning}` : ''}`}
+                  key={`underneath-prev-${currentPhoto.id}`}
+                  className="album-single-page page-underneath"
+                >
+                  <MemoryPhoto
+                    src={resolvePhotoSrc(currentPhoto.data)}
+                    alt={currentPhoto.caption || 'Current Memory'}
+                  />
+                  {currentPhoto.caption && (
+                    <div className="album-caption-wrapper">
+                      <p className="album-caption-text">{currentPhoto.caption}</p>
+                      <div className="album-caption-divider">
+                        <span className="divider-line" />
+                        <span className="divider-icon">💕</span>
+                        <span className="divider-line" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ACTIVE / TURNING TOP LAYER */}
+              {isTurning === 'next' && currentPhoto && (
+                <div
+                  key={`turning-next-${currentPhoto.id}`}
+                  className="album-single-page page-turning-next"
                 >
                   <MemoryPhoto
                     src={resolvePhotoSrc(currentPhoto.data)}
                     alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
-                    isHighPriority={true}
+                  />
+                  {currentPhoto.caption && (
+                    <div className="album-caption-wrapper">
+                      <p className="album-caption-text">{currentPhoto.caption}</p>
+                      <div className="album-caption-divider">
+                        <span className="divider-line" />
+                        <span className="divider-icon">💕</span>
+                        <span className="divider-line" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {isTurning === 'prev' && prevPhoto && (
+                <div
+                  key={`turning-prev-${prevPhoto.id}`}
+                  className="album-single-page page-turning-prev"
+                >
+                  <MemoryPhoto
+                    src={resolvePhotoSrc(prevPhoto.data)}
+                    alt={prevPhoto.caption || `Memory ${currentIndex}`}
+                  />
+                  {prevPhoto.caption && (
+                    <div className="album-caption-wrapper">
+                      <p className="album-caption-text">{prevPhoto.caption}</p>
+                      <div className="album-caption-divider">
+                        <span className="divider-line" />
+                        <span className="divider-icon">💕</span>
+                        <span className="divider-line" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* RESTING STATE (Not turning): Single stable page with zero duplicate nodes */}
+              {!isTurning && currentPhoto && (
+                <div
+                  key={`resting-${currentPhoto.id}`}
+                  className="album-single-page page-resting"
+                >
+                  <MemoryPhoto
+                    src={resolvePhotoSrc(currentPhoto.data)}
+                    alt={currentPhoto.caption || `Memory ${currentIndex + 1}`}
                   />
                   {currentPhoto.caption && (
                     <div className="album-caption-wrapper">

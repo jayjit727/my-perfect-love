@@ -131,6 +131,40 @@ export const App: React.FC = () => {
 
   return (
     <>
+      {/* Permanent In-DOM Cache Stack for Instant Zero-Delay Asset & Photo Rendering */}
+      <div
+        style={{
+          position: 'fixed',
+          top: -9999,
+          left: -9999,
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
+      >
+        <img src={mjbCrestImg} alt="" loading="eager" fetchPriority="high" decoding="sync" />
+        <img src={myMjHeartDecor} alt="" loading="eager" fetchPriority="high" decoding="sync" />
+        <img src={calendarImg} alt="" loading="eager" fetchPriority="high" decoding="sync" />
+        {INITIAL_PHOTOS.map((p) => {
+          const src = p.data.startsWith('http') || p.data.startsWith('data:') || p.data.startsWith('blob:')
+            ? p.data
+            : `${import.meta.env.BASE_URL}${p.data.startsWith('/') ? p.data.slice(1) : p.data}`;
+          return (
+            <img
+              key={`global-cache-${p.id}`}
+              src={src}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
+            />
+          );
+        })}
+      </div>
+
       {/* Romantic Background Atmosphere */}
       <FloatingHearts />
 

@@ -1212,24 +1212,31 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 0.9rem;
-}
-
-/* Underneath Photo (already resting in place, waiting to be revealed) */
-.album-single-page.page-underneath {
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* Top Photo (peels open smoothly to the left on next) */
-.album-single-page.page-top {
-  z-index: 3;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
 }
 
-/* Page Peeling Away on Next: physically turns like a real book page */
-.page-top.turning-next {
+/* Resting Page (stable single layer when not turning) */
+.album-single-page.page-resting {
+  z-index: 2;
+  transform: rotateY(0deg);
+  opacity: 1;
+}
+
+/* Underneath Photo (already resting in place, waiting to be revealed or covered) */
+.album-single-page.page-underneath {
+  z-index: 1;
+  transform: rotateY(0deg);
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Turning Next: Outgoing page peels away to the left uncovering underneath page */
+.album-single-page.page-turning-next {
+  z-index: 3;
   transform-origin: left center;
-  animation: pageTurnPeelAway 0.46s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
+  animation: pageTurnPeelAway 0.32s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
   pointer-events: none;
 }
 
@@ -1253,30 +1260,31 @@ html, body {
   }
 }
 
-/* Page Peeling Backward on Previous: turns smoothly to the right */
-.page-top.turning-prev {
-  transform-origin: right center;
-  animation: pageTurnPeelBack 0.46s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
+/* Turning Previous: Incoming page peels in from left onto book */
+.album-single-page.page-turning-prev {
+  z-index: 3;
+  transform-origin: left center;
+  animation: pageTurnPeelIn 0.32s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
   pointer-events: none;
 }
 
-@keyframes pageTurnPeelBack {
+@keyframes pageTurnPeelIn {
   0% {
-    transform: rotateY(0deg);
-    opacity: 1;
-    filter: brightness(1);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    transform: rotateY(-115deg);
+    opacity: 0;
+    filter: brightness(0.85);
+    box-shadow: -28px 15px 45px rgba(110, 36, 48, 0.28);
   }
   50% {
     opacity: 0.95;
     filter: brightness(0.94);
-    box-shadow: 18px 10px 32px rgba(110, 36, 48, 0.2);
+    box-shadow: -18px 10px 32px rgba(110, 36, 48, 0.2);
   }
   100% {
-    transform: rotateY(115deg);
-    opacity: 0;
-    filter: brightness(0.85);
-    box-shadow: 28px 15px 45px rgba(110, 36, 48, 0.28);
+    transform: rotateY(0deg);
+    opacity: 1;
+    filter: brightness(1);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   }
 }
 
