@@ -64,14 +64,14 @@ export const LoveLetterSection: React.FC<LoveLetterSectionProps> = ({
                 {formatLetterParagraph(
                   closing
                     ? closing
-                        .replace(/\n?your beloved Jb 🧿/g, '')
+                        .replace(/\n?(your|Your) beloved Jb 🧿/gi, '')
                         .replace(/\n?❤️\s*♾️/g, '')
                         .trim() + ' ❤️ ♾️'
                     : 'You are someone I want beside me, not just for a moment, but for a lifetime. ❤️ ♾️'
                 )}
               </div>
               <div className="letter-signature-jb">
-                your beloved Jb 🧿
+                Your beloved Jb 🧿
               </div>
             </div>
           </div>

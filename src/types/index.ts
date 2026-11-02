@@ -102,7 +102,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     "From the day I found you again on 14th August, 2026, to all the days that are yet to come, I want to keep choosing you, understanding you, growing with you, and loving you a little better every day.",
     "I love you, Moumita. Not just for the person you are today, but for the person you are becoming and for the beautiful life I hope we can build together.",
   ],
-  letterClosing: 'You are someone I want beside me, not just for a moment, but for a lifetime.\n❤️ ♾️\nyour beloved Jb 🧿',
+  letterClosing: 'You are someone I want beside me, not just for a moment, but for a lifetime. ❤️ ♾️\nYour beloved Jb 🧿',
   letterPhoto: null,
 
   mysteryInitials: 'MJB',
