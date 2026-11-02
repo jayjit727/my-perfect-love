@@ -72,6 +72,9 @@ export async function loadContent(): Promise<SiteContent> {
           loaded.letterParagraphs = DEFAULT_CONTENT.letterParagraphs;
           loaded.letterClosing = DEFAULT_CONTENT.letterClosing;
         }
+        if (!loaded.letterClosing || !loaded.letterClosing.includes('Jb')) {
+          loaded.letterClosing = DEFAULT_CONTENT.letterClosing;
+        }
         resolve(loaded);
       } else {
         resolve(DEFAULT_CONTENT);

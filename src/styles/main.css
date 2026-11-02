@@ -677,11 +677,20 @@ html, body {
 
 .letter-closing-text {
   font-family: 'Dancing Script', cursive;
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   color: var(--deep-rose);
   text-align: right;
-  margin-top: 1.5rem;
+  margin-top: 1.8rem;
   white-space: pre-line;
+  line-height: 1.6;
+}
+
+.letter-signature-jb {
+  margin-top: 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 600;
+  color: var(--deep-rose);
+  letter-spacing: 0.5px;
 }
 
 /* ========================================================
